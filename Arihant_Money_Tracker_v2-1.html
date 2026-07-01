@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arihant Medicos — Money Tracker</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1F3864;--green:#1E6B3C;--blue:#1A4A7A;--purple:#5B2C8D;
+  --red:#C0392B;--teal:#00796B;--bg:#F0F4FA;--white:#fff;
+  --text:#212121;--muted:#6B7280;--border:#E2E8F0;--alt:#F8FAFF;
+  --trk:#E8F5E9;--warn:#FFF8DC;
+}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+/* ── Header ── */
+.hdr{background:var(--navy);color:#fff;padding:11px 16px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hdr h1{font-size:16px}.hdr small{font-size:11px;opacity:.7;display:block}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+  padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:Arial}
+.hbtn:hover{background:rgba(255,255,255,.25)}
+
+/* ── Tabs ── */
+.tabs{display:flex;background:var(--navy);padding:0 14px;overflow-x:auto;gap:2px}
+.tab{padding:9px 15px;color:rgba(255,255,255,.55);cursor:pointer;
+  border-bottom:3px solid transparent;white-space:nowrap;font-size:13px;font-weight:bold;transition:all .2s}
+.tab:hover{color:#fff}.tab.active{color:#fff;border-bottom-color:#FFD700}
+
+/* ── Pages ── */
+.page{display:none;padding:14px;max-width:1200px;margin:0 auto}.page.active{display:block}
+
+/* ── Card ── */
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);
+  padding:14px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:bold;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:11px;padding-bottom:7px;border-bottom:2px solid var(--border)}
+
+/* ── Form ── */
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;color:var(--muted);font-weight:bold}
+.fg input,.fg select{padding:7px 9px;border:1.5px solid var(--border);border-radius:6px;
+  font-size:13px;font-family:Arial;color:var(--text);background:#fff;transition:border-color .2s}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--navy)}
+.fg input[type=number]{text-align:right}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-bottom:10px}
+
+/* ── Buttons ── */
+.btn{border:none;padding:8px 18px;border-radius:7px;cursor:pointer;font-size:13px;
+  font-weight:bold;font-family:Arial;transition:opacity .2s}
+.btn:active{opacity:.8}
+.bg{background:var(--green);color:#fff}
+.bb{background:var(--blue);color:#fff}
+.bp{background:var(--purple);color:#fff}
+.bt{background:var(--teal);color:#fff}
+.br{background:var(--red);color:#fff}
+.bo{background:#fff;color:var(--navy);border:2px solid var(--navy);padding:6px 13px}
+.bsm{padding:5px 11px;font-size:12px}
+
+/* ── Transfer box ── */
+.tbox{background:linear-gradient(135deg,#E8F5E9,#E3F2FD);border:2px solid #81C784;
+  border-radius:10px;padding:13px;margin-bottom:12px}
+.tbox .card-title{color:#1E6B3C;border-bottom-color:#81C784}
+
+/* ── Table ── */
+.tw{overflow-x:auto;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--navy);color:#fff;padding:8px 9px;text-align:left;font-size:11px;white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+tr:nth-child(even) td{background:var(--alt)}tr:hover td{background:#EEF4FF}
+td.r{text-align:right;font-weight:bold}
+td.pos{color:var(--green)}td.neg{color:var(--red)}
+.tf td{background:#FFF8DC!important;font-weight:bold;border-top:2px solid #E2C96A}
+.btn-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:2px 5px}
+.btn-del:hover{background:#FDEDEC;border-radius:4px}
+
+/* ── Chips ── */
+.chip{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:bold}
+.ctrk{background:#E8F5E9;color:#1E6B3C}
+.cbnk{background:#E3F2FD;color:#1A4A7A}
+.ctrf{background:#FFF3E0;color:#E65100}
+.cinc{background:#F0FFF4;color:#1E6B3C}
+.cexp{background:#FEF3F2;color:#922B21}
+
+/* ── KPIs ── */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{border-radius:10px;padding:12px 14px;color:#fff}
+.kpi .kl{font-size:11px;opacity:.8;margin-bottom:4px}
+.kpi .kv{font-size:18px;font-weight:bold}
+.kgreen{background:linear-gradient(135deg,#1E6B3C,#27AE60)}
+.kblue{background:linear-gradient(135deg,#1A4A7A,#2980B9)}
+.kpurple{background:linear-gradient(135deg,#5B2C8D,#8E44AD)}
+.kred{background:linear-gradient(135deg,#922B21,#E74C3C)}
+.kdark{background:linear-gradient(135deg,#212121,#444)}
+.kteal{background:linear-gradient(135deg,#00796B,#26A69A)}
+.kgold{background:linear-gradient(135deg,#B7770D,#F39C12)}
+
+/* ── Bank cards ── */
+.bcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px}
+.bcard{border-radius:10px;padding:13px;background:linear-gradient(135deg,#1A4A7A,#2980B9);color:#fff}
+.bcard .bl{font-size:10px;opacity:.75}.bcard .bn{font-size:13px;font-weight:bold;margin:2px 0}
+.bcard .bv{font-size:21px;font-weight:bold}
+
+/* ── Account list ── */
+.aclist{display:flex;flex-direction:column;gap:7px}
+.acitem{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 13px;background:var(--alt);border-radius:8px;border:1px solid var(--border)}
+.acname{font-weight:bold;font-size:14px}.acsub{font-size:11px;color:var(--muted)}
+
+/* ── Date filter ── */
+.dfilt{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+.dfilt label{font-size:12px;font-weight:bold;color:var(--muted)}
+.dfilt input{padding:6px 9px;border:1.5px solid var(--border);border-radius:6px;
+  font-family:Arial;font-size:13px;background:#FFF8DC;font-weight:bold}
+
+/* ── Modal ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;
+  align-items:center;justify-content:center}
+.mo.open{display:flex}
+.md{background:#fff;border-radius:12px;padding:18px;width:90%;max-width:460px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.md h3{font-size:14px;margin-bottom:13px;color:var(--navy)}
+.md-btns{display:flex;gap:8px;margin-top:13px;justify-content:flex-end}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:26px;color:var(--muted);font-size:13px}
+.empty .ei{font-size:30px;margin-bottom:7px}
+
+.trktbl th{background:var(--green)}
+.exptbl th{background:#922B21}
+.inctbl th{background:var(--green)}
+
+/* edit mode banner */
+.edit-banner{background:#FFF3E0;border:2px solid #F39C12;border-radius:8px;
+  padding:8px 13px;margin-bottom:10px;font-size:13px;font-weight:bold;color:#E65100;
+  display:none;align-items:center;justify-content:space-between}
+.edit-banner.show{display:flex}
+.btn-edit{background:none;border:none;color:var(--blue);cursor:pointer;font-size:14px;padding:2px 5px}
+.btn-edit:hover{background:#E3F2FD;border-radius:4px}
+
+@media(max-width:600px){
+  .fgrid{grid-template-columns:1fr 1fr}
+  .kgrid{grid-template-columns:1fr 1fr}
+  .kpi .kv{font-size:15px}
+}
+/* ── PIN modal ── */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:900;align-items:center;justify-content:center}
+.pin-overlay.open{display:flex}
+.pin-box{background:#fff;border-radius:14px;padding:24px 22px;width:90%;max-width:340px;
+  text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.pin-box h2{font-size:16px;color:var(--navy);margin-bottom:4px}
+.pin-box p{font-size:12px;color:var(--muted);margin-bottom:16px}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:18px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--border);transition:background .2s}
+.pin-dot.filled{background:var(--navy)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto 14px}
+.pin-key{padding:13px;border-radius:9px;border:1.5px solid var(--border);background:#fff;
+  font-size:18px;font-weight:bold;cursor:pointer;font-family:Arial;color:var(--text);transition:all .15s}
+.pin-key:hover{background:var(--alt);border-color:var(--navy)}
+.pin-key:active{background:#dde;transform:scale(.95)}
+.pin-key.del{background:#FEF3F2;color:var(--red);border-color:#FECACA}
+.pin-err{color:var(--red);font-size:12px;font-weight:bold;min-height:16px;margin-bottom:8px}
+.pin-lock-icon{font-size:36px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="hdr">
+  <div><h1>💊 Arihant Medicos</h1><small>Money Tracker</small></div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="hbtn" onclick="switchTab('settings')">⚙ Settings</button>
+    <button class="hbtn" onclick="exportData()">⬇ Backup</button>
+    <button class="hbtn" onclick="document.getElementById('impFile').click()">⬆ Restore</button>
+    <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<!-- ── Tabs ────────────────────────────────────────────────────── -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('cash')">💰 Cash Book</div>
+  <div class="tab" onclick="switchTab('bank')">🏦 Bank Book</div>
+  <div class="tab" onclick="switchTab('sales')">🧾 Daily Sales</div>
+  <div class="tab" onclick="switchTab('dash')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('settings')">⚙ Settings</div>
+</div>
+
+<!-- ════════════════ CASH BOOK ════════════════ -->
+<div class="page active" id="page-cash">
+
+  <!-- Cash→Bank Transfer -->
+  <div class="tbox">
+    <div class="card-title">🏧 Cash → Bank Deposit</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="tr-date"></div>
+      <div class="fg"><label>Amount (₹)</label><input type="number" id="tr-amt" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>To Bank Account</label><select id="tr-bank"></select></div>
+      <div class="fg"><label>Track / Source</label><select id="tr-track"></select></div>
+      <div class="fg"><label>Slip / Ref No.</label><input type="text" id="tr-ref" placeholder="Deposit slip no."></div>
+      <div class="fg"><label>Note</label><input type="text" id="tr-note" placeholder="Optional"></div>
+    </div>
+    <button class="btn bt" onclick="addTransfer()">💳 Record Deposit</button>
+    <span style="font-size:11px;color:#555;margin-left:10px">Auto-deducts from Cash &amp; adds to Bank</span>
+  </div>
+
+  <!-- Add Cash Entry -->
+  <div class="card">
+    <div class="card-title" id="cash-form-title">➕ Add Cash Entry</div>
+    <div id="cash-edit-banner" class="edit-banner">
+      ✏️ Editing entry — make changes and click Update
+      <button class="btn bo bsm" onclick="cancelEdit('cash')">✕ Cancel</button>
+    </div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="c-date"></div>
+      <div class="fg"><label>Track / Source</label><select id="c-track"></select></div>
+      <div class="fg"><label>Cash IN (₹)</label><input type="number" id="c-in" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Income Category <small style="color:#aaa">(for IN)</small></label><select id="c-inc-cat"></select></div>
+      <div class="fg"><label>Cash OUT (₹)</label><input type="number" id="c-out" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Expense Category <small style="color:#aaa">(for OUT)</small></label><select id="c-exp-cat"></select></div>
+      <div class="fg"><label>Party / Reason</label><input type="text" id="c-party" placeholder="Name or reason"></div>
+      <div class="fg"><label>Note</label><input type="text" id="c-note" placeholder="Optional"></div>
+    </div>
+    <button class="btn bg" id="cash-btn" onclick="addCash()">+ Add Entry</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="cash-title">Cash Book</div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Date</th><th>Type</th><th>Track</th>
+        <th>Cash IN ₹</th><th>Income Cat.</th>
+        <th>Cash OUT ₹</th><th>Expense Cat.</th>
+        <th>Party / Reason</th><th>Balance ₹</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody id="cash-tbody"></tbody>
+      <tfoot><tr id="cash-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+</div>
+
+<!-- ════════════════ BANK BOOK ════════════════ -->
+<div class="page" id="page-bank">
+  <div class="card">
+    <div class="card-title" id="bank-form-title">➕ Add Bank Transaction</div>
+    <div id="bank-edit-banner" class="edit-banner">
+      ✏️ Editing entry — make changes and click Update
+      <button class="btn bo bsm" onclick="cancelEdit('bank')">✕ Cancel</button>
+    </div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="b-date"></div>
+      <div class="fg"><label>Bank Account</label><select id="b-account"></select></div>
+      <div class="fg"><label>Track / Source</label><select id="b-track"></select></div>
+      <div class="fg"><label>Money IN (₹)</label><input type="number" id="b-in" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Income Category <small style="color:#aaa">(for IN)</small></label><select id="b-inc-cat"></select></div>
+      <div class="fg"><label>Money OUT (₹)</label><input type="number" id="b-out" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Expense Category <small style="color:#aaa">(for OUT)</small></label><select id="b-exp-cat"></select></div>
+      <div class="fg"><label>Party Name</label><input type="text" id="b-party" placeholder="Party name"></div>
+      <div class="fg"><label>UTR / Ref No.</label><input type="text" id="b-ref" placeholder="UTR or cheque no."></div>
+      <div class="fg"><label>Note</label><input type="text" id="b-note" placeholder="Optional"></div>
+    </div>
+    <button class="btn bb" id="bank-btn" onclick="addBank()">+ Add Entry</button>
+  </div>
+
+  <div id="bank-balance-cards" class="bcards"></div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+      <div class="card-title" style="margin:0" id="bank-title">Bank Book</div>
+      <select id="b-filter" onchange="renderBank()" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:Arial;font-size:12px">
+        <option value="">All Accounts</option>
+      </select>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Date</th><th>Bank</th><th>Track</th><th>Type</th>
+        <th>Money IN ₹</th><th>Income Cat.</th>
+        <th>Money OUT ₹</th><th>Expense Cat.</th>
+        <th>Party</th><th>UTR/Ref</th><th>Balance ₹</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody id="bank-tbody"></tbody>
+      <tfoot><tr id="bank-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+</div>
+
+<!-- ════════════════ DAILY SALES ════════════════ -->
+<div class="page" id="page-sales">
+  <div class="card">
+    <div class="card-title" id="sales-form-title">➕ Add Sale Entry</div>
+    <div id="sales-edit-banner" class="edit-banner">
+      ✏️ Editing entry — make changes and click Update
+      <button class="btn bo bsm" onclick="cancelEdit('sales')">✕ Cancel</button>
+    </div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="s-date"></div>
+      <div class="fg"><label>Invoice No.</label><input type="text" id="s-inv" placeholder="Invoice number"></div>
+      <div class="fg"><label>Party Name</label><input type="text" id="s-party" placeholder="Retailer / party name"></div>
+      <div class="fg"><label>Track / Route</label><select id="s-track"></select></div>
+      <div class="fg"><label>Sale Amount (₹)</label><input type="number" id="s-amt" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Cash Received (₹)</label><input type="number" id="s-cash" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Bank Received (₹)</label><input type="number" id="s-bank" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>UPI Received (₹)</label><input type="number" id="s-upi" placeholder="0" min="0" step="0.01"></div>
+      <div class="fg"><label>Note</label><input type="text" id="s-note" placeholder="Optional"></div>
+    </div>
+    <button class="btn bp" id="sales-btn" onclick="addSale()">+ Add Sale</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="sales-title">Sales Entries</div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Date</th><th>Invoice</th><th>Party</th><th>Track</th>
+        <th>Sale ₹</th><th>Cash ₹</th><th>Bank ₹</th><th>UPI ₹</th>
+        <th>Pending ₹</th><th>Status</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody id="sales-tbody"></tbody>
+      <tfoot><tr id="sales-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+</div>
+
+<!-- ════════════════ DASHBOARD ════════════════ -->
+<div class="page" id="page-dash">
+  <div class="card" style="padding:11px 14px">
+    <div class="dfilt">
+      <label>📅 Snapshot Date:</label>
+      <input type="date" id="dash-date">
+      <button class="btn bb bsm" onclick="setToday()">Today</button>
+      <span id="dash-day" style="font-weight:bold;color:var(--navy);font-size:13px"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💼 Overall Position</div>
+    <div class="kgrid" id="kpi-overall"></div>
+    <div class="bcards" id="kpi-banks"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 Today's Snapshot</div>
+    <div class="kgrid" id="kpi-today"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 Track-wise Sales</div>
+    <div class="tw"><table class="trktbl">
+      <thead><tr>
+        <th>Track / Route</th><th>Day</th><th>Sales ₹</th>
+        <th>Collected ₹</th><th>Pending ₹</th><th>Bills #</th><th>Avg ₹</th>
+      </tr></thead>
+      <tbody id="track-tbody"></tbody>
+      <tfoot><tr id="track-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💸 Expense Breakdown (Cash + Bank OUT)</div>
+    <div class="tw"><table class="exptbl">
+      <thead><tr><th>Category</th><th>Amount ₹</th><th>% Share</th><th>Entries</th></tr></thead>
+      <tbody id="exp-tbody"></tbody>
+      <tfoot><tr id="exp-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📥 Income Breakdown (Cash + Bank IN)</div>
+    <div class="tw"><table class="inctbl">
+      <thead><tr><th>Category</th><th>Amount ₹</th><th>% Share</th><th>Entries</th></tr></thead>
+      <tbody id="inc-tbody"></tbody>
+      <tfoot><tr id="inc-tfoot" class="tf"></tr></tfoot>
+    </table></div>
+  </div>
+</div>
+
+<!-- ════════════════ SETTINGS ════════════════ -->
+<div class="page" id="page-settings">
+
+  <!-- PIN Management -->
+  <div class="card" id="pin-status-card">
+    <div class="card-title">🔒 PIN Protection</div>
+    <div id="pin-status-content"></div>
+  </div>
+
+  <!-- Tracks -->
+  <div class="card">
+    <div class="card-title">🗺 Tracks / Routes</div>
+    <div class="fgrid" style="max-width:560px">
+      <div class="fg" style="grid-column:span 2"><label>Track Name</label>
+        <input type="text" id="new-trk-name" placeholder="e.g. Rajnandgaon, Bilaspur"></div>
+      <div class="fg"><label>Day of Week</label>
+        <select id="new-trk-day">
+          <option value="—">— Not fixed —</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select></div>
+    </div>
+    <button class="btn bg" onclick="addTrack()">+ Add Track</button>
+  </div>
+  <div class="card"><div class="card-title">Saved Tracks</div><div id="track-list"></div></div>
+
+  <!-- Bank Accounts -->
+  <div class="card">
+    <div class="card-title">🏦 Bank Accounts</div>
+    <div class="fgrid" style="max-width:400px">
+      <div class="fg"><label>Bank Name</label><input type="text" id="new-bnk-name" placeholder="e.g. SBI, HDFC"></div>
+      <div class="fg"><label>Account Label</label><input type="text" id="new-bnk-lbl" placeholder="e.g. Current A/C"></div>
+    </div>
+    <button class="btn bb" onclick="addBankAcc()">+ Add Bank Account</button>
+  </div>
+  <div class="card"><div class="card-title">Saved Bank Accounts</div><div class="aclist" id="acc-list"></div></div>
+
+  <!-- Expense Categories -->
+  <div class="card">
+    <div class="card-title">💸 Expense Categories</div>
+    <div class="fgrid" style="max-width:380px">
+      <div class="fg"><label>Icon (emoji)</label>
+        <input type="text" id="new-exp-icon" placeholder="💳" maxlength="2" style="font-size:18px;text-align:center"></div>
+      <div class="fg"><label>Category Name</label>
+        <input type="text" id="new-exp-name" placeholder="e.g. Fuel, Rent"></div>
+    </div>
+    <button class="btn br" onclick="addExpCat()">+ Add Expense Category</button>
+  </div>
+  <div class="card"><div class="card-title">Expense Categories</div><div class="aclist" id="exp-cat-list"></div></div>
+
+  <!-- Income Categories -->
+  <div class="card">
+    <div class="card-title">📥 Income Categories</div>
+    <div class="fgrid" style="max-width:380px">
+      <div class="fg"><label>Icon (emoji)</label>
+        <input type="text" id="new-inc-icon" placeholder="💰" maxlength="2" style="font-size:18px;text-align:center"></div>
+      <div class="fg"><label>Category Name</label>
+        <input type="text" id="new-inc-name" placeholder="e.g. Bonus, Commission"></div>
+    </div>
+    <button class="btn bg" onclick="addIncCat()">+ Add Income Category</button>
+  </div>
+  <div class="card"><div class="card-title">Income Categories</div><div class="aclist" id="inc-cat-list"></div></div>
+</div>
+
+<!-- Edit Track Modal -->
+<div class="mo" id="edit-modal">
+  <div class="md">
+    <h3>✏️ Edit Track</h3>
+    <input type="hidden" id="edit-trk-id">
+    <div class="fgrid">
+      <div class="fg" style="grid-column:span 2"><label>Track Name</label>
+        <input type="text" id="edit-trk-name"></div>
+      <div class="fg"><label>Day</label>
+        <select id="edit-trk-day">
+          <option value="—">— Not fixed —</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select></div>
+    </div>
+    <div class="md-btns">
+      <button class="btn bo bsm" onclick="closeModal()">Cancel</button>
+      <button class="btn bg bsm" onclick="saveTrack()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN Modal -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-lock-icon" id="pin-icon">🔒</div>
+    <h2 id="pin-title">Enter PIN</h2>
+    <p id="pin-sub">This section is protected</p>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-err" id="pin-err"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" style="visibility:hidden"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <button class="btn bo bsm" id="pin-cancel-btn" onclick="pinCancel()" style="width:100%">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════════
+const DEFAULT_TRACKS = [
+  {id:"t1",  name:"Dongargarh",                     day:"Monday"},
+  {id:"t2",  name:"Dhara / Muripar",                day:"Tuesday"},
+  {id:"t3",  name:"Bemetara",                       day:"Tuesday"},
+  {id:"t4",  name:"Ghumka",                         day:"Wednesday"},
+  {id:"t5",  name:"Salhewara",                      day:"Wednesday"},
+  {id:"t6",  name:"Deori / Dalli / Bhanupratappur", day:"Thursday"},
+  {id:"t7",  name:"Durg",                           day:"Thursday"},
+  {id:"t8",  name:"Chuikdan / Gandai / Lohara",     day:"Friday"},
+  {id:"t9",  name:"Dongargaon / Churiya",           day:"Friday"},
+  {id:"t10", name:"Mohla / Manpur / Chowki",        day:"Saturday"},
+  {id:"t11", name:"Kawardha / Pondicherry / Bodla", day:"Sunday"},
+  {id:"t12", name:"Anda / Nikum / Chandkhuri",      day:"—"},
+  {id:"t13", name:"Arjunda / Sikosa / Balod",       day:"—"},
+  {id:"t14", name:"Khairagarh",                     day:"—"},
+  {id:"t15", name:"Khujji / Umarwahi",              day:"—"},
+  {id:"t16", name:"Office / Local",                 day:"—"},
+  {id:"t17", name:"Other",                          day:"—"},
+];
+
+const DEFAULT_ACCOUNTS = [
+  {id:"a1", name:"SBI",  label:"Main Current A/C"},
+  {id:"a2", name:"HDFC", label:"Savings A/C"},
+];
+
+const DEFAULT_EXP = [
+  {id:"e1", name:"Payments",  icon:"💳"},
+  {id:"e2", name:"Salary",    icon:"👷"},
+  {id:"e3", name:"Household", icon:"🏠"},
+  {id:"e4", name:"Tracks",    icon:"🚚"},
+  {id:"e5", name:"Others",    icon:"📦"},
+];
+
+const DEFAULT_INC = [
+  {id:"i1", name:"Track Collection", icon:"🚛"},
+  {id:"i2", name:"Sales Receipt",    icon:"🧾"},
+  {id:"i3", name:"Commission",       icon:"💰"},
+  {id:"i4", name:"Other Income",     icon:"📥"},
+];
+
+const DAY_CLR = {
+  Monday:"#1565C0",Tuesday:"#6A1B9A",Wednesday:"#2E7D32",
+  Thursday:"#E65100",Friday:"#B71C1C",Saturday:"#00695C",Sunday:"#4E342E","—":"#546E7A"
+};
+
+const ECOL = ["#C0392B","#8E44AD","#1A4A7A","#D35400","#1E6B3C","#2C3E50","#7F8C8D"];
+const ICOL = ["#1E6B3C","#1A4A7A","#5B2C8D","#00796B","#B7770D","#2C3E50"];
+
+// ════════════════════════════════════════════════════════
+// DATABASE
+// ════════════════════════════════════════════════════════
+let DB = loadDB();
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem('arihant_v3');
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.cash)) {
+        d.bank     = d.bank     || [];
+        d.sales    = d.sales    || [];
+        d.accounts = d.accounts || DEFAULT_ACCOUNTS;
+        d.tracks   = d.tracks   || DEFAULT_TRACKS;
+        d.expCats  = d.expCats  || DEFAULT_EXP;
+        d.incCats  = d.incCats  || DEFAULT_INC;
+        return d;
+      }
+    }
+  } catch(e) { console.warn('DB load error:', e); }
+  return { cash:[], bank:[], sales:[], accounts:[...DEFAULT_ACCOUNTS],
+           tracks:[...DEFAULT_TRACKS], expCats:[...DEFAULT_EXP], incCats:[...DEFAULT_INC] };
+}
+
+function save() {
+  try { localStorage.setItem('arihant_v3', JSON.stringify(DB)); }
+  catch(e) { alert('Save failed: '+e.message); }
+}
+
+// ════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════
+const inr  = v => '₹' + Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt  = d => d ? d.split('-').reverse().join('-') : '—';
+const tod  = () => new Date().toISOString().slice(0,10);
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const gv   = id => (document.getElementById(id)||{}).value || '';
+const sv   = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
+
+function getAccName(id) {
+  const a = DB.accounts.find(x=>x.id===id);
+  return a ? a.name+' ('+a.label+')' : (id||'—');
+}
+
+function accBal(id) {
+  return DB.bank.filter(r=>r.account===id).reduce((s,r)=>s+(r.in||0)-(r.out||0),0);
+}
+
+function chipInc(name) {
+  const c = name ? DB.incCats.find(x=>x.name===name) : null;
+  return c ? '<span class="chip cinc">'+c.icon+' '+c.name+'</span>' : '<span style="color:#bbb">—</span>';
+}
+
+function chipExp(name) {
+  const c = name ? DB.expCats.find(x=>x.name===name) : null;
+  return c ? '<span class="chip cexp">'+c.icon+' '+c.name+'</span>' : '<span style="color:#bbb">—</span>';
+}
+
+// ════════════════════════════════════════════════════════
+// POPULATE DROPDOWNS
+// ════════════════════════════════════════════════════════
+function populateAll() {
+  // Tracks
+  ['c-track','b-track','s-track','tr-track'].forEach(function(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">— Select Track —</option>';
+    DB.tracks.forEach(function(t) {
+      var o = document.createElement('option');
+      o.value = t.name; o.textContent = t.name; el.appendChild(o);
+    });
+    el.value = cur;
+  });
+
+  // Income cats
+  ['c-inc-cat','b-inc-cat'].forEach(function(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">— Income Category —</option>';
+    DB.incCats.forEach(function(c) {
+      var o = document.createElement('option');
+      o.value = c.name; o.textContent = c.icon+' '+c.name; el.appendChild(o);
+    });
+    el.value = cur;
+  });
+
+  // Expense cats
+  ['c-exp-cat','b-exp-cat'].forEach(function(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">— Expense Category —</option>';
+    DB.expCats.forEach(function(c) {
+      var o = document.createElement('option');
+      o.value = c.name; o.textContent = c.icon+' '+c.name; el.appendChild(o);
+    });
+    el.value = cur;
+  });
+
+  // Bank accounts
+  ['b-account','tr-bank','b-filter'].forEach(function(id) {
+    var el = document.getElementById(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = id==='b-filter'
+      ? '<option value="">All Accounts</option>'
+      : '<option value="">— Select Bank —</option>';
+    DB.accounts.forEach(function(a) {
+      var o = document.createElement('option');
+      o.value = a.id; o.textContent = a.name+' ('+a.label+')'; el.appendChild(o);
+    });
+    el.value = cur;
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// PIN SYSTEM
+// ════════════════════════════════════════════════════════
+var PIN_KEY = 'arihant_pin';
+var sessionUnlocked = false;
+var pinBuffer = '';
+var pinMode = '';
+var pinTemp  = '';
+var pinOnSuccess = null;
+
+function getPin()  { return localStorage.getItem(PIN_KEY) || ''; }
+function setPin(p) { localStorage.setItem(PIN_KEY, p); }
+function isPinSet() { return getPin().length === 4; }
+
+function requirePin(onSuccess, allowCancel) {
+  if (sessionUnlocked) { onSuccess(); return; }
+  if (!isPinSet()) {
+    openPinModal('setup', '🔐 Set a PIN', 'Choose a 4-digit PIN to protect this app', allowCancel);
+  } else {
+    openPinModal('verify', '🔒 Enter PIN', 'This section is protected', allowCancel);
+  }
+  pinOnSuccess = onSuccess;
+}
+
+function openPinModal(mode, title, sub, allowCancel) {
+  pinMode = mode; pinBuffer = ''; pinTemp = '';
+  document.getElementById('pin-title').textContent = title;
+  document.getElementById('pin-sub').textContent   = sub;
+  document.getElementById('pin-icon').textContent  = (mode==='verify') ? '🔒' : '🔐';
+  document.getElementById('pin-err').textContent   = '';
+  document.getElementById('pin-cancel-btn').style.display = (allowCancel===false) ? 'none' : 'block';
+  updatePinDots();
+  document.getElementById('pin-overlay').classList.add('open');
+}
+
+function updatePinDots() {
+  for (var i=0; i<4; i++) {
+    var d = document.getElementById('pd'+i);
+    if (d) d.classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function pinKey(k) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  document.getElementById('pin-err').textContent = '';
+  if (pinBuffer.length === 4) { setTimeout(pinSubmit, 150); }
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+}
+
+function pinSubmit() {
+  if (pinMode === 'verify') {
+    if (pinBuffer === getPin()) {
+      sessionUnlocked = true;
+      closePinModal();
+      if (pinOnSuccess) { var cb=pinOnSuccess; pinOnSuccess=null; cb(); }
+    } else {
+      document.getElementById('pin-err').textContent = '❌ Wrong PIN. Try again.';
+      pinBuffer=''; updatePinDots();
+    }
+
+  } else if (pinMode === 'setup') {
+    pinTemp = pinBuffer; pinBuffer='';
+    document.getElementById('pin-title').textContent = '🔐 Confirm PIN';
+    document.getElementById('pin-sub').textContent   = 'Re-enter your 4-digit PIN';
+    document.getElementById('pin-err').textContent   = '';
+    updatePinDots();
+    pinMode = 'setup-confirm';
+
+  } else if (pinMode === 'setup-confirm') {
+    if (pinBuffer === pinTemp) {
+      setPin(pinBuffer); sessionUnlocked = true;
+      closePinModal();
+      alert('✅ PIN set! You are now unlocked for this session.');
+      if (pinOnSuccess) { var cb=pinOnSuccess; pinOnSuccess=null; cb(); }
+    } else {
+      document.getElementById('pin-err').textContent = '❌ PINs do not match. Try again.';
+      pinBuffer=''; pinTemp=''; updatePinDots();
+      setTimeout(function(){ openPinModal('setup','🔐 Set a PIN','Choose a 4-digit PIN',false); }, 900);
+    }
+
+  } else if (pinMode === 'change-old') {
+    if (pinBuffer === getPin()) {
+      pinBuffer='';
+      openPinModal('change-new','🔐 New PIN','Enter your new 4-digit PIN', true);
+    } else {
+      document.getElementById('pin-err').textContent = '❌ Wrong current PIN.';
+      pinBuffer=''; updatePinDots();
+    }
+
+  } else if (pinMode === 'change-new') {
+    pinTemp = pinBuffer; pinBuffer='';
+    openPinModal('change-confirm','🔐 Confirm New PIN','Re-enter your new PIN', true);
+
+  } else if (pinMode === 'change-confirm') {
+    if (pinBuffer === pinTemp) {
+      setPin(pinBuffer); closePinModal();
+      alert('✅ PIN changed successfully!');
+    } else {
+      document.getElementById('pin-err').textContent = '❌ PINs do not match.';
+      pinBuffer=''; pinTemp=''; updatePinDots();
+      setTimeout(function(){ openPinModal('change-new','🔐 New PIN','Enter your new 4-digit PIN',true); }, 900);
+    }
+  }
+}
+
+function pinCancel() {
+  closePinModal(); pinOnSuccess = null;
+  switchTabDirect('cash');
+}
+
+function closePinModal() {
+  document.getElementById('pin-overlay').classList.remove('open');
+  pinBuffer=''; updatePinDots();
+}
+
+function changePinFlow() {
+  if (!isPinSet()) {
+    openPinModal('setup','🔐 Set PIN','Choose a 4-digit PIN', true);
+  } else {
+    openPinModal('change-old','🔒 Current PIN','Enter your current PIN first', true);
+  }
+  pinOnSuccess = null;
+}
+
+function resetPin() {
+  if (!confirm('Reset PIN? Everyone will be able to access all sections until a new PIN is set.')) return;
+  localStorage.removeItem(PIN_KEY);
+  sessionUnlocked = false;
+  renderPinStatus();
+  alert('PIN cleared.');
+}
+
+// ════════════════════════════════════════════════════════
+// EDIT STATE
+// ════════════════════════════════════════════════════════
+var editState = { cash: null, bank: null, sales: null };
+
+function setEditMode(section, on) {
+  var banner = document.getElementById(section+'-edit-banner');
+  var btn    = document.getElementById(section+'-btn');
+  var title  = document.getElementById(section+'-form-title');
+  var labels = { cash:'Cash Entry', bank:'Bank Transaction', sales:'Sale Entry' };
+  var colors = { cash:'bg', bank:'bb', sales:'bp' };
+  if (on) {
+    if (banner) banner.classList.add('show');
+    if (btn)    { btn.textContent = '✅ Update '+labels[section]; btn.className='btn br'; }
+    if (title)  title.textContent = '✏️ Edit '+labels[section];
+    // scroll form into view
+    if (banner) banner.scrollIntoView({behavior:'smooth', block:'nearest'});
+  } else {
+    if (banner) banner.classList.remove('show');
+    if (btn)    { btn.textContent = '+ Add '+labels[section].split(' ')[0]; btn.className='btn '+colors[section]; }
+    if (title)  title.textContent = '➕ Add '+labels[section];
+    editState[section] = null;
+  }
+}
+
+function cancelEdit(section) {
+  setEditMode(section, false);
+  var clears = {
+    cash:  ['c-in','c-out','c-inc-cat','c-exp-cat','c-party','c-note'],
+    bank:  ['b-in','b-out','b-inc-cat','b-exp-cat','b-party','b-ref','b-note','b-account'],
+    sales: ['s-inv','s-party','s-amt','s-cash','s-bank','s-upi','s-note'],
+  };
+  (clears[section]||[]).forEach(function(id){sv(id,'');});
+}
+// ════════════════════════════════════════════════════════
+// TAB SWITCHING (PIN-aware)
+// ════════════════════════════════════════════════════════
+var PROTECTED = ['bank','sales','dash','settings'];
+
+function switchTab(t) {
+  if (PROTECTED.indexOf(t) !== -1 && !sessionUnlocked) {
+    requirePin(function() { switchTabDirect(t); }, true);
+    return;
+  }
+  switchTabDirect(t);
+}
+
+function switchTabDirect(t) {
+  var tabs = ['cash','bank','sales','dash','settings'];
+  document.querySelectorAll('.tab').forEach(function(el,i) {
+    el.classList.toggle('active', tabs[i]===t);
+  });
+  document.querySelectorAll('.page').forEach(function(el) { el.classList.remove('active'); });
+  var pg = document.getElementById('page-'+t);
+  if (pg) pg.classList.add('active');
+  if (t==='dash')     { renderDash(); }
+  if (t==='bank')     { renderBankCards(); renderBank(); }
+  if (t==='settings') { renderTracks(); renderAccList(); renderExpCatList(); renderIncCatList(); renderPinStatus(); }
+}
+
+// ════════════════════════════════════════════════════════
+// CASH → BANK TRANSFER
+// ════════════════════════════════════════════════════════
+function addTransfer() {
+  var d   = gv('tr-date');
+  var amt = parseFloat(gv('tr-amt'))||0;
+  var acc = gv('tr-bank');
+  var trk = gv('tr-track');
+  var ref = gv('tr-ref');
+  var nt  = gv('tr-note');
+  if (!d)   { alert('Select date.'); return; }
+  if (!amt) { alert('Enter amount.'); return; }
+  if (!acc) { alert('Select bank account.'); return; }
+  var tid = uid();
+  var aname = getAccName(acc);
+  DB.cash.push({id:uid(),date:d,track:trk,in:0,out:amt,
+    expCat:'',incCat:'',party:'Deposit → '+aname,note:ref||nt,type:'transfer',tid:tid});
+  DB.bank.push({id:uid(),date:d,account:acc,track:trk,in:amt,out:0,
+    incCat:'',expCat:'',party:'Cash Deposit',ref:ref,note:nt||'Cash Deposit',type:'transfer',tid:tid});
+  DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+  DB.bank.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderCash();
+  sv('tr-amt',''); sv('tr-ref',''); sv('tr-note','');
+  alert('✅ ₹'+amt.toLocaleString('en-IN')+' deposited to '+aname);
+}
+
+// ════════════════════════════════════════════════════════
+// CASH BOOK
+// ════════════════════════════════════════════════════════
+function editCash(id) {
+  requirePin(function() { doEditCash(id); }, true);
+}
+function doEditCash(id) {
+  var r = DB.cash.find(function(x){return x.id===id;}); if (!r) return;
+  if (r.type==='transfer') { alert('Transfer entries cannot be edited. Delete and re-enter.'); return; }
+  editState.cash = id;
+  sv('c-date', r.date); sv('c-track', r.track||'');
+  sv('c-in',  r.in||''); sv('c-out', r.out||'');
+  sv('c-inc-cat', r.incCat||''); sv('c-exp-cat', r.expCat||'');
+  sv('c-party', r.party||''); sv('c-note', r.note||'');
+  setEditMode('cash', true);
+}
+
+function addCash() {
+  var d   = gv('c-date');
+  var trk = gv('c-track');
+  var ci  = parseFloat(gv('c-in'))||0;
+  var co  = parseFloat(gv('c-out'))||0;
+  var ica = gv('c-inc-cat');
+  var eca = gv('c-exp-cat');
+  var pa  = gv('c-party').trim();
+  var nt  = gv('c-note').trim();
+  if (!d)        { alert('Select date.'); return; }
+  if (!ci && !co){ alert('Enter Cash IN or Cash OUT.'); return; }
+
+  if (editState.cash) {
+    // Update existing
+    var r = DB.cash.find(function(x){return x.id===editState.cash;});
+    if (r) { r.date=d; r.track=trk; r.in=ci; r.out=co; r.incCat=ica; r.expCat=eca; r.party=pa; r.note=nt; }
+    DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+    save(); renderCash(); cancelEdit('cash'); return;
+  }
+
+  DB.cash.push({id:uid(),date:d,track:trk,in:ci,out:co,incCat:ica,expCat:eca,party:pa,note:nt,type:'entry'});
+  DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderCash();
+  ['c-in','c-out','c-inc-cat','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
+}
+
+function renderCash() {
+  var tb = document.getElementById('cash-tbody');
+  var tf = document.getElementById('cash-tfoot');
+  if (!DB.cash.length) {
+    tb.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="ei">💰</div>No cash entries yet.</div></td></tr>';
+    tf.innerHTML = ''; return;
+  }
+  var bal=0, tIn=0, tOut=0;
+  tb.innerHTML = DB.cash.map(function(r) {
+    bal += (r.in||0)-(r.out||0); tIn+=r.in||0; tOut+=r.out||0;
+    var isT = r.type==='transfer';
+    var typL = isT ? '<span class="chip ctrf">🏧 Deposit</span>'
+                   : '<span class="chip" style="background:#EDE7F6;color:#4527A0">📝 Entry</span>';
+    return '<tr>'
+      +'<td>'+fmt(r.date)+'</td>'
+      +'<td>'+typL+'</td>'
+      +'<td>'+(r.track?'<span class="chip ctrk">'+r.track+'</span>':'<span style="color:#aaa">—</span>')+'</td>'
+      +'<td class="r pos">'+(r.in?inr(r.in):'—')+'</td>'
+      +'<td>'+(r.in&&!isT?chipInc(r.incCat):'')+'</td>'
+      +'<td class="r neg">'+(r.out?inr(r.out):'—')+'</td>'
+      +'<td>'+(r.out&&!isT?chipExp(r.expCat):'')+'</td>'
+      +'<td>'+(r.party||'—')+'</td>'
+      +'<td class="r '+(bal>=0?'pos':'neg')+'">'+inr(bal)+'</td>'
+      +'<td>'+(r.note||'—')+'</td>'
+      +'<td style="white-space:nowrap">'
+      +(isT?'':'<button class="btn-edit" onclick="editCash(\''+r.id+'\')">✏️</button>')
+      +'<button class="btn-del" onclick="delCash(\''+r.id+'\')">✕</button></td>'
+      +'</tr>';
+  }).join('');
+  tf.innerHTML = '<td colspan="3"><b>TOTAL</b></td>'
+    +'<td class="r pos">'+inr(tIn)+'</td><td></td>'
+    +'<td class="r neg">'+inr(tOut)+'</td>'
+    +'<td></td><td></td>'
+    +'<td class="r '+(bal>=0?'pos':'neg')+'">'+inr(bal)+'</td><td colspan="2"></td>';
+  document.getElementById('cash-title').textContent = 'Cash Book ('+DB.cash.length+' entries)';
+}
+
+function delCash(id) {
+  var r = DB.cash.find(function(x){return x.id===id;});
+  if (r && r.type==='transfer') {
+    if (!confirm('This is a Cash→Bank transfer. Delete both sides?')) return;
+    DB.cash = DB.cash.filter(function(x){return x.id!==id;});
+    DB.bank = DB.bank.filter(function(x){return x.tid!==r.tid;});
+  } else {
+    if (!confirm('Delete this entry?')) return;
+    DB.cash = DB.cash.filter(function(x){return x.id!==id;});
+  }
+  save(); renderCash();
+}
+
+// ════════════════════════════════════════════════════════
+// BANK BOOK
+// ════════════════════════════════════════════════════════
+function editBank(id) {
+  requirePin(function() { doEditBank(id); }, true);
+}
+function doEditBank(id) {
+  var r = DB.bank.find(function(x){return x.id===id;}); if (!r) return;
+  if (r.type==='transfer') { alert('Transfer entries cannot be edited. Delete and re-enter.'); return; }
+  editState.bank = id;
+  sv('b-date', r.date); sv('b-account', r.account||''); sv('b-track', r.track||'');
+  sv('b-in',  r.in||''); sv('b-out', r.out||'');
+  sv('b-inc-cat', r.incCat||''); sv('b-exp-cat', r.expCat||'');
+  sv('b-party', r.party||''); sv('b-ref', r.ref||''); sv('b-note', r.note||'');
+  setEditMode('bank', true);
+}
+
+function addBank() {
+  var d   = gv('b-date');
+  var acc = gv('b-account');
+  var trk = gv('b-track');
+  var bi  = parseFloat(gv('b-in'))||0;
+  var bo  = parseFloat(gv('b-out'))||0;
+  var ica = gv('b-inc-cat');
+  var eca = gv('b-exp-cat');
+  var pa  = gv('b-party').trim();
+  var rf  = gv('b-ref').trim();
+  var nt  = gv('b-note').trim();
+  if (!d)        { alert('Select date.'); return; }
+  if (!acc)      { alert('Select bank account.'); return; }
+  if (!bi && !bo){ alert('Enter Money IN or OUT.'); return; }
+
+  if (editState.bank) {
+    var r = DB.bank.find(function(x){return x.id===editState.bank;});
+    if (r) { r.date=d; r.account=acc; r.track=trk; r.in=bi; r.out=bo;
+             r.incCat=ica; r.expCat=eca; r.party=pa; r.ref=rf; r.note=nt; }
+    DB.bank.sort(function(a,b){return a.date.localeCompare(b.date);});
+    save(); renderBank(); renderBankCards(); cancelEdit('bank'); return;
+  }
+
+  DB.bank.push({id:uid(),date:d,account:acc,track:trk,in:bi,out:bo,
+    incCat:ica,expCat:eca,party:pa,ref:rf,note:nt,type:'entry'});
+  DB.bank.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderBank(); renderBankCards();
+  ['b-in','b-out','b-inc-cat','b-exp-cat','b-party','b-ref','b-note'].forEach(function(id){sv(id,'');});
+}
+
+function renderBank() {
+  var filter = gv('b-filter');
+  var rows = filter ? DB.bank.filter(function(r){return r.account===filter;}) : DB.bank;
+  var tb = document.getElementById('bank-tbody');
+  var tf = document.getElementById('bank-tfoot');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="13"><div class="empty"><div class="ei">🏦</div>No bank entries yet.</div></td></tr>';
+    tf.innerHTML = ''; return;
+  }
+  var tIn=0, tOut=0;
+  var balMap = {};
+  tb.innerHTML = rows.map(function(r) {
+    if (!balMap[r.account]) balMap[r.account]=0;
+    balMap[r.account]+=(r.in||0)-(r.out||0);
+    tIn+=r.in||0; tOut+=r.out||0;
+    var isT = r.type==='transfer';
+    var typL = isT ? '<span class="chip ctrf">💵 Cash Dep.</span>'
+                   : '<span class="chip" style="background:#E3F2FD;color:#1A4A7A">📝 Entry</span>';
+    var b = balMap[r.account];
+    return '<tr>'
+      +'<td>'+fmt(r.date)+'</td>'
+      +'<td><span class="chip cbnk">'+getAccName(r.account)+'</span></td>'
+      +'<td>'+(r.track?'<span class="chip ctrk">'+r.track+'</span>':'<span style="color:#aaa">—</span>')+'</td>'
+      +'<td>'+typL+'</td>'
+      +'<td class="r pos">'+(r.in?inr(r.in):'—')+'</td>'
+      +'<td>'+(r.in&&!isT?chipInc(r.incCat):'')+'</td>'
+      +'<td class="r neg">'+(r.out?inr(r.out):'—')+'</td>'
+      +'<td>'+(r.out&&!isT?chipExp(r.expCat):'')+'</td>'
+      +'<td>'+(r.party||'—')+'</td>'
+      +'<td>'+(r.ref||'—')+'</td>'
+      +'<td class="r '+(b>=0?'pos':'neg')+'">'+inr(b)+'</td>'
+      +'<td>'+(r.note||'—')+'</td>'
+      +'<td style="white-space:nowrap">'
+      +(isT?'':'<button class="btn-edit" onclick="editBank(\''+r.id+'\')">✏️</button>')
+      +'<button class="btn-del" onclick="delBank(\''+r.id+'\')">✕</button></td>'
+      +'</tr>';
+  }).join('');
+  var tot = rows.reduce(function(s,r){return s+(r.in||0)-(r.out||0);},0);
+  tf.innerHTML = '<td colspan="4"><b>TOTAL ('+rows.length+')</b></td>'
+    +'<td class="r pos">'+inr(tIn)+'</td><td></td>'
+    +'<td class="r neg">'+inr(tOut)+'</td>'
+    +'<td colspan="3"></td>'
+    +'<td class="r '+(tot>=0?'pos':'neg')+'">'+inr(tot)+'</td><td colspan="2"></td>';
+  document.getElementById('bank-title').textContent =
+    filter ? 'Bank Book — '+getAccName(filter)+' ('+rows.length+')' : 'Bank Book ('+rows.length+' entries)';
+}
+
+function delBank(id) {
+  var r = DB.bank.find(function(x){return x.id===id;});
+  if (r && r.type==='transfer') {
+    if (!confirm('Delete this bank deposit entry?')) return;
+  } else {
+    if (!confirm('Delete this entry?')) return;
+  }
+  DB.bank = DB.bank.filter(function(x){return x.id!==id;});
+  save(); renderBank(); renderBankCards();
+}
+
+function renderBankCards() {
+  var el = document.getElementById('bank-balance-cards'); if (!el) return;
+  el.innerHTML = DB.accounts.map(function(a) {
+    return '<div class="bcard"><div class="bl">'+a.label+'</div>'
+      +'<div class="bn">🏦 '+a.name+'</div>'
+      +'<div class="bv">'+inr(accBal(a.id))+'</div></div>';
+  }).join('') || '<div style="color:var(--muted);font-size:13px">Add bank accounts in ⚙ Settings</div>';
+}
+
+// ════════════════════════════════════════════════════════
+// DAILY SALES
+// ════════════════════════════════════════════════════════
+function editSale(id) {
+  requirePin(function() { doEditSale(id); }, true);
+}
+function doEditSale(id) {
+  var r = DB.sales.find(function(x){return x.id===id;}); if (!r) return;
+  editState.sales = id;
+  sv('s-date', r.date); sv('s-inv', r.inv||''); sv('s-party', r.party||'');
+  sv('s-track', r.track||''); sv('s-amt', r.amt||'');
+  sv('s-cash', r.cash||''); sv('s-bank', r.bank||'');
+  sv('s-upi', r.upi||''); sv('s-note', r.note||'');
+  setEditMode('sales', true);
+}
+
+function addSale() {
+  var d  = gv('s-date');
+  var iv = gv('s-inv').trim();
+  var pa = gv('s-party').trim();
+  var tr = gv('s-track');
+  var am = parseFloat(gv('s-amt'))||0;
+  var ca = parseFloat(gv('s-cash'))||0;
+  var ba = parseFloat(gv('s-bank'))||0;
+  var up = parseFloat(gv('s-upi'))||0;
+  var nt = gv('s-note').trim();
+  if (!d)  { alert('Select date.'); return; }
+  if (!pa) { alert('Enter party name.'); return; }
+  if (!am) { alert('Enter sale amount.'); return; }
+
+  if (editState.sales) {
+    var r = DB.sales.find(function(x){return x.id===editState.sales;});
+    if (r) { r.date=d; r.inv=iv; r.party=pa; r.track=tr; r.amt=am;
+             r.cash=ca; r.bank=ba; r.upi=up; r.note=nt; }
+    DB.sales.sort(function(a,b){return a.date.localeCompare(b.date);});
+    save(); renderSales(); cancelEdit('sales'); return;
+  }
+
+  DB.sales.push({id:uid(),date:d,inv:iv,party:pa,track:tr,amt:am,cash:ca,bank:ba,upi:up,note:nt});
+  DB.sales.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderSales();
+  ['s-inv','s-party','s-amt','s-cash','s-bank','s-upi','s-note'].forEach(function(id){sv(id,'');});
+}
+
+function renderSales() {
+  var tb = document.getElementById('sales-tbody');
+  var tf = document.getElementById('sales-tfoot');
+  if (!DB.sales.length) {
+    tb.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="ei">🧾</div>No sales yet.</div></td></tr>';
+    tf.innerHTML = ''; return;
+  }
+  var tA=0,tC=0,tB=0,tU=0,tP=0;
+  tb.innerHTML = DB.sales.map(function(r) {
+    var col=(r.cash||0)+(r.bank||0)+(r.upi||0);
+    var pend=(r.amt||0)-col;
+    tA+=r.amt||0; tC+=r.cash||0; tB+=r.bank||0; tU+=r.upi||0; tP+=pend;
+    var sc,st;
+    if (pend<=0){sc='chip cinc';st='✅ Clear';}
+    else if (col===0){sc='chip' ;st='⏳ Pending';}
+    else {sc='chip cexp';st='⚠ Partial';}
+    return '<tr>'
+      +'<td>'+fmt(r.date)+'</td><td>'+(r.inv||'—')+'</td>'
+      +'<td><b>'+(r.party||'—')+'</b></td>'
+      +'<td>'+(r.track?'<span class="chip ctrk">'+r.track+'</span>':'<span style="color:#aaa">—</span>')+'</td>'
+      +'<td class="r">'+inr(r.amt)+'</td>'
+      +'<td class="r pos">'+(r.cash?inr(r.cash):'—')+'</td>'
+      +'<td class="r pos">'+(r.bank?inr(r.bank):'—')+'</td>'
+      +'<td class="r pos">'+(r.upi?inr(r.upi):'—')+'</td>'
+      +'<td class="r '+(pend>0?'neg':'pos')+'">'+inr(pend)+'</td>'
+      +'<td><span class="'+sc+'">'+st+'</span></td>'
+      +'<td>'+(r.note||'—')+'</td>'
+      +'<td style="white-space:nowrap">'
+      +'<button class="btn-edit" onclick="editSale(\''+r.id+'\')">✏️</button>'
+      +'<button class="btn-del" onclick="delSale(\''+r.id+'\')">✕</button></td>'
+      +'</tr>';
+  }).join('');
+  tf.innerHTML = '<td colspan="4"><b>TOTAL ('+DB.sales.length+' bills)</b></td>'
+    +'<td class="r">'+inr(tA)+'</td>'
+    +'<td class="r pos">'+inr(tC)+'</td>'
+    +'<td class="r pos">'+inr(tB)+'</td>'
+    +'<td class="r pos">'+inr(tU)+'</td>'
+    +'<td class="r '+(tP>0?'neg':'pos')+'">'+inr(tP)+'</td><td colspan="3"></td>';
+  document.getElementById('sales-title').textContent = 'Sales Entries ('+DB.sales.length+' bills)';
+}
+
+function delSale(id) {
+  if (!confirm('Delete this sale?')) return;
+  DB.sales = DB.sales.filter(function(x){return x.id!==id;}); save(); renderSales();
+}
+
+// ════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════
+function setToday() { sv('dash-date', tod()); renderDash(); }
+
+function kpiBox(lbl,val,cls) {
+  return '<div class="kpi '+cls+'"><div class="kl">'+lbl+'</div><div class="kv">'+val+'</div></div>';
+}
+
+function catBreakdown(entries, cats, colors, tbId, tfId, isExp) {
+  var tb = document.getElementById(tbId);
+  var tf = document.getElementById(tfId);
+  if (!tb) return;
+  var total = entries.reduce(function(s,r){return s+r.amt;},0);
+  var map = {};
+  entries.forEach(function(r) {
+    var k = r.cat || 'Uncategorised';
+    if (!map[k]) map[k]={amt:0,cnt:0};
+    map[k].amt+=r.amt; map[k].cnt++;
+  });
+  var keys = cats.map(function(c){return c.name;}).concat(['Uncategorised']);
+  var totA=0,totC=0;
+  tb.innerHTML = keys.map(function(cat,i) {
+    var d = map[cat]; if (!d) return '';
+    var obj = cats.find(function(c){return c.name===cat;});
+    var icon = obj ? obj.icon : '❓';
+    var pct = total ? (d.amt/total*100).toFixed(1) : '0.0';
+    var clr = colors[i%colors.length];
+    totA+=d.amt; totC+=d.cnt;
+    var barW = Math.max(4,parseFloat(pct));
+    return '<tr>'
+      +'<td><span class="chip '+(isExp?'cexp':'cinc')+'">'+icon+' '+cat+'</span></td>'
+      +'<td class="r '+(isExp?'neg':'pos')+'">'+inr(d.amt)+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:5px">'
+      +'<div style="background:'+clr+';height:7px;border-radius:3px;width:'+barW+'%;min-width:4px;max-width:110px"></div>'
+      +'<span style="font-size:11px;font-weight:bold;color:'+clr+'">'+pct+'%</span></div></td>'
+      +'<td style="text-align:center">'+d.cnt+'</td>'
+      +'</tr>';
+  }).join('');
+  tf.innerHTML = '<td><b>TOTAL</b></td>'
+    +'<td class="r '+(isExp?'neg':'pos')+'">'+inr(totA)+'</td>'
+    +'<td></td><td style="text-align:center"><b>'+totC+'</b></td>';
+}
+
+function renderDash() {
+  var dt = gv('dash-date') || tod();
+  sv('dash-date', dt);
+  var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('dash-day').textContent = '('+days[new Date(dt+'T00:00:00').getDay()]+')';
+
+  var cashBal = DB.cash.reduce(function(s,r){return s+(r.in||0)-(r.out||0);},0);
+  var totBank = DB.accounts.reduce(function(s,a){return s+accBal(a.id);},0);
+  var totSale = DB.sales.reduce(function(s,r){return s+(r.amt||0);},0);
+  var totColl = DB.sales.reduce(function(s,r){return s+(r.cash||0)+(r.bank||0)+(r.upi||0);},0);
+  var totPend = totSale - totColl;
+
+  document.getElementById('kpi-overall').innerHTML =
+    kpiBox('💵 Cash in Hand',   inr(cashBal),        'kgreen')+
+    kpiBox('🏦 Total Bank',     inr(totBank),         'kblue')+
+    kpiBox('💰 Net (Cash+Bank)',inr(cashBal+totBank), 'kdark')+
+    kpiBox('📈 Total Sales',    inr(totSale),         'kpurple')+
+    kpiBox('✅ Collected',      inr(totColl),         'kgreen')+
+    kpiBox('⏳ Pending',        inr(totPend),         totPend>0?'kred':'kteal');
+
+  document.getElementById('kpi-banks').innerHTML = DB.accounts.map(function(a) {
+    return '<div class="bcard"><div class="bl">'+a.label+'</div>'
+      +'<div class="bn">'+a.name+'</div><div class="bv">'+inr(accBal(a.id))+'</div></div>';
+  }).join('') || '<span style="color:var(--muted);font-size:12px">No bank accounts yet</span>';
+
+  // Today snapshot
+  var fd = function(arr){ return arr.filter(function(r){return r.date===dt;}); };
+  var sm = function(arr,f){ return arr.reduce(function(s,r){return s+(r[f]||0);},0); };
+  var tCI=sm(fd(DB.cash),'in'), tCO=sm(fd(DB.cash),'out');
+  var tBI=sm(fd(DB.bank),'in'), tBO=sm(fd(DB.bank),'out');
+  var tSal=sm(fd(DB.sales),'amt');
+  var tCol=fd(DB.sales).reduce(function(s,r){return s+(r.cash||0)+(r.bank||0)+(r.upi||0);},0);
+  document.getElementById('kpi-today').innerHTML =
+    kpiBox('💵 Cash IN', inr(tCI),'kgreen')+
+    kpiBox('💸 Cash OUT',inr(tCO),'kred')+
+    kpiBox('🏦 Bank IN', inr(tBI),'kblue')+
+    kpiBox('🏦 Bank OUT',inr(tBO),'kred')+
+    kpiBox('🧾 Sales',   inr(tSal),'kpurple')+
+    kpiBox('✅ Collected',inr(tCol),tCol>0?'kgreen':'kgold');
+
+  // Track-wise sales
+  var tb2 = document.getElementById('track-tbody');
+  var tf2 = document.getElementById('track-tfoot');
+  var gS=0,gC=0,gP=0,gB=0;
+  tb2.innerHTML = DB.tracks.map(function(t) {
+    var rows = DB.sales.filter(function(r){return r.track===t.name;});
+    if (!rows.length) return '<tr>'
+      +'<td><b>'+t.name+'</b></td>'
+      +'<td style="color:'+DAY_CLR[t.day]+';font-weight:bold;font-size:11px">'+t.day+'</td>'
+      +'<td class="r" style="color:#bbb">—</td><td class="r" style="color:#bbb">—</td>'
+      +'<td class="r" style="color:#bbb">—</td>'
+      +'<td style="text-align:center;color:#bbb">0</td><td class="r" style="color:#bbb">—</td></tr>';
+    var sale=rows.reduce(function(s,r){return s+(r.amt||0);},0);
+    var coll=rows.reduce(function(s,r){return s+(r.cash||0)+(r.bank||0)+(r.upi||0);},0);
+    var pend=sale-coll;
+    gS+=sale; gC+=coll; gP+=pend; gB+=rows.length;
+    return '<tr>'
+      +'<td><span class="chip ctrk">'+t.name+'</span></td>'
+      +'<td style="color:'+DAY_CLR[t.day]+';font-weight:bold;font-size:11px">'+t.day+'</td>'
+      +'<td class="r">'+inr(sale)+'</td>'
+      +'<td class="r pos">'+inr(coll)+'</td>'
+      +'<td class="r '+(pend>0?'neg':'')+'">'+inr(pend)+'</td>'
+      +'<td style="text-align:center">'+rows.length+'</td>'
+      +'<td class="r">'+inr(sale/rows.length)+'</td></tr>';
+  }).join('');
+  tf2.innerHTML = '<td><b>GRAND TOTAL</b></td><td></td>'
+    +'<td class="r">'+inr(gS)+'</td>'
+    +'<td class="r pos">'+inr(gC)+'</td>'
+    +'<td class="r '+(gP>0?'neg':'')+'">'+inr(gP)+'</td>'
+    +'<td style="text-align:center"><b>'+gB+'</b></td><td></td>';
+
+  // Expense breakdown (Cash OUT + Bank OUT, non-transfer)
+  var expEntries = []
+    .concat(DB.cash.filter(function(r){return r.out&&r.type!=='transfer';})
+                   .map(function(r){return {cat:r.expCat,amt:r.out};}))
+    .concat(DB.bank.filter(function(r){return r.out&&r.type!=='transfer';})
+                   .map(function(r){return {cat:r.expCat,amt:r.out};}));
+  catBreakdown(expEntries, DB.expCats, ECOL, 'exp-tbody','exp-tfoot', true);
+
+  // Income breakdown (Cash IN + Bank IN, non-transfer)
+  var incEntries = []
+    .concat(DB.cash.filter(function(r){return r.in&&r.type!=='transfer';})
+                   .map(function(r){return {cat:r.incCat,amt:r.in};}))
+    .concat(DB.bank.filter(function(r){return r.in&&r.type!=='transfer';})
+                   .map(function(r){return {cat:r.incCat,amt:r.in};}));
+  catBreakdown(incEntries, DB.incCats, ICOL, 'inc-tbody','inc-tfoot', false);
+}
+
+// ════════════════════════════════════════════════════════
+// PIN STATUS IN SETTINGS
+// ════════════════════════════════════════════════════════
+function renderPinStatus() {
+  var el = document.getElementById('pin-status-content'); if (!el) return;
+  if (isPinSet()) {
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+      +'<div><span style="color:var(--green);font-weight:bold;font-size:15px">🔒 PIN is active</span>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px">Bank, Sales, Dashboard &amp; Settings are protected.</div></div>'
+      +'<div style="display:flex;gap:7px">'
+      +'<button class="btn bb bsm" onclick="changePinFlow()">🔑 Change PIN</button>'
+      +'<button class="btn br bsm" onclick="resetPin()">🗑 Reset PIN</button>'
+      +'</div></div>';
+  } else {
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+      +'<div><span style="color:var(--red);font-weight:bold;font-size:15px">🔓 No PIN set</span>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px">All sections are currently open.</div></div>'
+      +'<button class="btn bg bsm" onclick="changePinFlow()">🔐 Set PIN</button>'
+      +'</div>';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SETTINGS — TRACKS
+// ════════════════════════════════════════════════════════
+function addTrack() {
+  var name = gv('new-trk-name').trim();
+  var day  = gv('new-trk-day');
+  if (!name) { alert('Enter track name.'); return; }
+  if (DB.tracks.some(function(t){return t.name.toLowerCase()===name.toLowerCase();})) {
+    alert('Track already exists.'); return;
+  }
+  DB.tracks.push({id:uid(),name:name,day:day});
+  save(); populateAll(); renderTracks();
+  sv('new-trk-name',''); sv('new-trk-day','—');
+}
+
+function renderTracks() {
+  var el = document.getElementById('track-list'); if (!el) return;
+  if (!DB.tracks.length) { el.innerHTML='<div class="empty"><div class="ei">🗺</div>No tracks yet.</div>'; return; }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:7px">'
+    + DB.tracks.map(function(t) {
+      var clr = DAY_CLR[t.day]||'#546E7A';
+      return '<div class="acitem">'
+        +'<div><div class="acname">📍 '+t.name+'</div>'
+        +'<div class="acsub" style="color:'+clr+';font-weight:bold">'+t.day+'</div></div>'
+        +'<div style="display:flex;gap:5px">'
+        +'<button class="btn bo bsm" onclick="openEditTrack(\''+t.id+'\')">✏️</button>'
+        +'<button class="btn-del" onclick="delTrack(\''+t.id+'\')">✕</button>'
+        +'</div></div>';
+    }).join('')
+    +'</div>';
+}
+
+function openEditTrack(id) {
+  var t = DB.tracks.find(function(x){return x.id===id;}); if (!t) return;
+  sv('edit-trk-id',t.id); sv('edit-trk-name',t.name); sv('edit-trk-day',t.day);
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('edit-modal').classList.remove('open'); }
+
+function saveTrack() {
+  var id   = gv('edit-trk-id');
+  var name = gv('edit-trk-name').trim();
+  var day  = gv('edit-trk-day');
+  if (!name) { alert('Name cannot be empty.'); return; }
+  var t = DB.tracks.find(function(x){return x.id===id;}); if (!t) return;
+  var oldName = t.name;
+  t.name = name; t.day = day;
+  ['cash','bank','sales'].forEach(function(s) {
+    DB[s].forEach(function(r){ if(r.track===oldName) r.track=name; });
+  });
+  save(); populateAll(); renderTracks(); closeModal();
+  renderCash(); renderSales(); renderBank();
+}
+
+function delTrack(id) {
+  var t = DB.tracks.find(function(x){return x.id===id;}); if (!t) return;
+  var inUse = ['cash','bank','sales'].some(function(s){
+    return DB[s].some(function(r){return r.track===t.name;});
+  });
+  var msg = inUse
+    ? '"'+t.name+'" has entries. Delete track from list? (entries keep the name)'
+    : 'Delete track "'+t.name+'"?';
+  if (!confirm(msg)) return;
+  DB.tracks = DB.tracks.filter(function(x){return x.id!==id;});
+  save(); populateAll(); renderTracks();
+}
+
+// ════════════════════════════════════════════════════════
+// SETTINGS — BANK ACCOUNTS
+// ════════════════════════════════════════════════════════
+function addBankAcc() {
+  var name = gv('new-bnk-name').trim();
+  var lbl  = gv('new-bnk-lbl').trim();
+  if (!name) { alert('Enter bank name.'); return; }
+  DB.accounts.push({id:uid(),name:name,label:lbl||'Account'});
+  save(); populateAll(); renderAccList(); renderBankCards();
+  sv('new-bnk-name',''); sv('new-bnk-lbl','');
+}
+
+function renderAccList() {
+  var el = document.getElementById('acc-list'); if (!el) return;
+  if (!DB.accounts.length) { el.innerHTML='<div class="empty"><div class="ei">🏦</div>No accounts yet.</div>'; return; }
+  el.innerHTML = DB.accounts.map(function(a) {
+    return '<div class="acitem">'
+      +'<div><div class="acname">🏦 '+a.name+'</div><div class="acsub">'+a.label+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:9px">'
+      +'<span style="font-weight:bold;color:var(--blue)">'+inr(accBal(a.id))+'</span>'
+      +'<button class="btn-del" onclick="delBankAcc(\''+a.id+'\')">✕</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function delBankAcc(id) {
+  if (DB.bank.some(function(r){return r.account===id;})) {
+    if (!confirm('This account has transactions. Delete anyway?')) return;
+  } else {
+    if (!confirm('Delete this bank account?')) return;
+  }
+  DB.accounts = DB.accounts.filter(function(a){return a.id!==id;});
+  save(); populateAll(); renderAccList();
+}
+
+// ════════════════════════════════════════════════════════
+// SETTINGS — EXPENSE CATEGORIES
+// ════════════════════════════════════════════════════════
+function addExpCat() {
+  var icon = gv('new-exp-icon').trim() || '📦';
+  var name = gv('new-exp-name').trim();
+  if (!name) { alert('Enter category name.'); return; }
+  if (DB.expCats.some(function(c){return c.name.toLowerCase()===name.toLowerCase();})) {
+    alert('Already exists.'); return;
+  }
+  DB.expCats.push({id:uid(),name:name,icon:icon});
+  save(); populateAll(); renderExpCatList();
+  sv('new-exp-icon',''); sv('new-exp-name','');
+}
+
+function renderExpCatList() {
+  var el = document.getElementById('exp-cat-list'); if (!el) return;
+  if (!DB.expCats.length) { el.innerHTML='<div class="empty"><div class="ei">💸</div>No categories yet.</div>'; return; }
+  el.innerHTML = DB.expCats.map(function(c) {
+    return '<div class="acitem">'
+      +'<div style="display:flex;align-items:center;gap:9px">'
+      +'<span style="font-size:20px">'+c.icon+'</span><div class="acname">'+c.name+'</div></div>'
+      +'<button class="btn-del" onclick="delExpCat(\''+c.id+'\')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+function delExpCat(id) {
+  var c = DB.expCats.find(function(x){return x.id===id;}); if (!c) return;
+  if (!confirm('Delete "'+c.name+'"?')) return;
+  DB.expCats = DB.expCats.filter(function(x){return x.id!==id;});
+  save(); populateAll(); renderExpCatList();
+}
+
+// ════════════════════════════════════════════════════════
+// SETTINGS — INCOME CATEGORIES
+// ════════════════════════════════════════════════════════
+function addIncCat() {
+  var icon = gv('new-inc-icon').trim() || '📥';
+  var name = gv('new-inc-name').trim();
+  if (!name) { alert('Enter category name.'); return; }
+  if (DB.incCats.some(function(c){return c.name.toLowerCase()===name.toLowerCase();})) {
+    alert('Already exists.'); return;
+  }
+  DB.incCats.push({id:uid(),name:name,icon:icon});
+  save(); populateAll(); renderIncCatList();
+  sv('new-inc-icon',''); sv('new-inc-name','');
+}
+
+function renderIncCatList() {
+  var el = document.getElementById('inc-cat-list'); if (!el) return;
+  if (!DB.incCats.length) { el.innerHTML='<div class="empty"><div class="ei">📥</div>No categories yet.</div>'; return; }
+  el.innerHTML = DB.incCats.map(function(c) {
+    return '<div class="acitem">'
+      +'<div style="display:flex;align-items:center;gap:9px">'
+      +'<span style="font-size:20px">'+c.icon+'</span><div class="acname">'+c.name+'</div></div>'
+      +'<button class="btn-del" onclick="delIncCat(\''+c.id+'\')">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+function delIncCat(id) {
+  var c = DB.incCats.find(function(x){return x.id===id;}); if (!c) return;
+  if (!confirm('Delete "'+c.name+'"?')) return;
+  DB.incCats = DB.incCats.filter(function(x){return x.id!==id;});
+  save(); populateAll(); renderIncCatList();
+}
+
+// ════════════════════════════════════════════════════════
+// BACKUP / RESTORE
+// ════════════════════════════════════════════════════════
+function exportData() {
+  var blob = new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'arihant_backup_'+tod()+'.json';
+  a.click();
+}
+
+function importData(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var d = JSON.parse(ev.target.result);
+      if (!Array.isArray(d.cash)) throw new Error('Invalid');
+      d.bank     = d.bank     || [];
+      d.sales    = d.sales    || [];
+      d.accounts = d.accounts || DEFAULT_ACCOUNTS;
+      d.tracks   = d.tracks   || DEFAULT_TRACKS;
+      d.expCats  = d.expCats  || DEFAULT_EXP;
+      d.incCats  = d.incCats  || DEFAULT_INC;
+      DB = d; save(); populateAll();
+      renderCash(); renderSales(); renderBank(); renderBankCards();
+      alert('✅ Data restored!');
+    } catch(err) { alert('❌ Invalid backup file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+populateAll();
+sv('c-date',tod()); sv('b-date',tod()); sv('s-date',tod());
+sv('tr-date',tod()); sv('dash-date',tod());
+renderCash(); renderSales(); renderBank(); renderBankCards();
+</script>
+</body>
+</html>
