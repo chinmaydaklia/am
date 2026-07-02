@@ -178,6 +178,19 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
   </div>
 </div>
 
+<!-- Backup reminder banner -->
+<div id="backup-banner" style="display:none;background:#FFF3CD;border-bottom:2px solid #F39C12;
+  padding:9px 16px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+  <span style="font-size:13px;color:#856404;font-weight:bold">
+    ⚠️ No backup taken in over 24 hours — save your data now!
+  </span>
+  <div style="display:flex;gap:8px">
+    <button class="btn" style="background:#F39C12;color:#fff;padding:6px 14px;font-size:12px"
+      onclick="exportData()">⬇ Backup Now</button>
+    <button class="btn bo bsm" onclick="hideBackupBanner()">Later</button>
+  </div>
+</div>
+
 <!-- ── Tabs ────────────────────────────────────────────────────── -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('cash')">💰 Cash Book</div>
@@ -212,15 +225,27 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
       ✏️ Editing entry — make changes and click Update
       <button class="btn bo bsm" onclick="cancelEdit('cash')">✕ Cancel</button>
     </div>
-    <div class="fgrid">
+    <div class="fgrid" style="grid-template-columns:repeat(auto-fill,minmax(165px,1fr))">
       <div class="fg"><label>Date</label><input type="date" id="c-date"></div>
       <div class="fg"><label>Track / Source</label><select id="c-track"></select></div>
-      <div class="fg"><label>Cash IN (₹)</label><input type="number" id="c-in" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg"><label>Income Category <small style="color:#aaa">(for IN)</small></label><select id="c-inc-cat"></select></div>
-      <div class="fg"><label>Cash OUT (₹)</label><input type="number" id="c-out" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg"><label>Expense Category <small style="color:#aaa">(for OUT)</small></label><select id="c-exp-cat"></select></div>
       <div class="fg"><label>Party / Reason</label><input type="text" id="c-party" placeholder="Name or reason"></div>
       <div class="fg"><label>Note</label><input type="text" id="c-note" placeholder="Optional"></div>
+    </div>
+    <!-- Cash IN row -->
+    <div style="background:#F0FFF4;border:1.5px solid #A7F3D0;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:bold;color:#1E6B3C;margin-bottom:7px">📥 CASH IN</div>
+      <div class="fgrid">
+        <div class="fg"><label>Cash IN (₹)</label><input type="number" id="c-in" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Income Category</label><select id="c-inc-cat"></select></div>
+      </div>
+    </div>
+    <!-- Cash OUT row -->
+    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:bold;color:#922B21;margin-bottom:7px">📤 CASH OUT</div>
+      <div class="fgrid">
+        <div class="fg"><label>Cash OUT (₹)</label><input type="number" id="c-out" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Expense Category</label><select id="c-exp-cat"></select></div>
+      </div>
     </div>
     <button class="btn bg" id="cash-btn" onclick="addCash()">+ Add Entry</button>
   </div>
@@ -248,17 +273,29 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
       ✏️ Editing entry — make changes and click Update
       <button class="btn bo bsm" onclick="cancelEdit('bank')">✕ Cancel</button>
     </div>
-    <div class="fgrid">
+    <div class="fgrid" style="grid-template-columns:repeat(auto-fill,minmax(165px,1fr))">
       <div class="fg"><label>Date</label><input type="date" id="b-date"></div>
       <div class="fg"><label>Bank Account</label><select id="b-account"></select></div>
       <div class="fg"><label>Track / Source</label><select id="b-track"></select></div>
-      <div class="fg"><label>Money IN (₹)</label><input type="number" id="b-in" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg"><label>Income Category <small style="color:#aaa">(for IN)</small></label><select id="b-inc-cat"></select></div>
-      <div class="fg"><label>Money OUT (₹)</label><input type="number" id="b-out" placeholder="0" min="0" step="0.01"></div>
-      <div class="fg"><label>Expense Category <small style="color:#aaa">(for OUT)</small></label><select id="b-exp-cat"></select></div>
       <div class="fg"><label>Party Name</label><input type="text" id="b-party" placeholder="Party name"></div>
       <div class="fg"><label>UTR / Ref No.</label><input type="text" id="b-ref" placeholder="UTR or cheque no."></div>
       <div class="fg"><label>Note</label><input type="text" id="b-note" placeholder="Optional"></div>
+    </div>
+    <!-- Money IN row -->
+    <div style="background:#F0FFF4;border:1.5px solid #A7F3D0;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:bold;color:#1E6B3C;margin-bottom:7px">📥 MONEY IN</div>
+      <div class="fgrid">
+        <div class="fg"><label>Money IN (₹)</label><input type="number" id="b-in" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Income Category</label><select id="b-inc-cat"></select></div>
+      </div>
+    </div>
+    <!-- Money OUT row -->
+    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:bold;color:#922B21;margin-bottom:7px">📤 MONEY OUT</div>
+      <div class="fgrid">
+        <div class="fg"><label>Money OUT (₹)</label><input type="number" id="b-out" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Expense Category</label><select id="b-exp-cat"></select></div>
+      </div>
     </div>
     <button class="btn bb" id="bank-btn" onclick="addBank()">+ Add Entry</button>
   </div>
@@ -788,11 +825,15 @@ function changePinFlow() {
 }
 
 function resetPin() {
-  if (!confirm('Reset PIN? Everyone will be able to access all sections until a new PIN is set.')) return;
-  localStorage.removeItem(PIN_KEY);
-  sessionUnlocked = false;
-  renderPinStatus();
-  alert('PIN cleared.');
+  if (!isPinSet()) { alert('No PIN is set.'); return; }
+  openPinModal('change-old', '🔒 Confirm Reset', 'Enter current PIN to reset it', true);
+  pinOnSuccess = function() {
+    if (!confirm('PIN verified. Clear PIN completely? All protected sections will be open.')) return;
+    localStorage.removeItem(PIN_KEY);
+    sessionUnlocked = false;
+    renderPinStatus();
+    alert('✅ PIN cleared. Set a new PIN anytime from Settings.');
+  };
 }
 
 // ════════════════════════════════════════════════════════
@@ -832,7 +873,7 @@ function cancelEdit(section) {
 // ════════════════════════════════════════════════════════
 // TAB SWITCHING (PIN-aware)
 // ════════════════════════════════════════════════════════
-var PROTECTED = ['bank','sales','dash','settings'];
+var PROTECTED = ['bank','sales','dash'];
 
 function switchTab(t) {
   if (PROTECTED.indexOf(t) !== -1 && !sessionUnlocked) {
@@ -915,13 +956,15 @@ function addCash() {
     var r = DB.cash.find(function(x){return x.id===editState.cash;});
     if (r) { r.date=d; r.track=trk; r.in=ci; r.out=co; r.incCat=ica; r.expCat=eca; r.party=pa; r.note=nt; }
     DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
-    save(); renderCash(); cancelEdit('cash'); return;
+    save(); renderCash();
+    ['c-track','c-in','c-inc-cat','c-out','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
+    cancelEdit('cash'); return;
   }
 
   DB.cash.push({id:uid(),date:d,track:trk,in:ci,out:co,incCat:ica,expCat:eca,party:pa,note:nt,type:'entry'});
   DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
   save(); renderCash();
-  ['c-in','c-out','c-inc-cat','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
+  ['c-track','c-in','c-inc-cat','c-out','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
 }
 
 function renderCash() {
@@ -1011,14 +1054,16 @@ function addBank() {
     if (r) { r.date=d; r.account=acc; r.track=trk; r.in=bi; r.out=bo;
              r.incCat=ica; r.expCat=eca; r.party=pa; r.ref=rf; r.note=nt; }
     DB.bank.sort(function(a,b){return a.date.localeCompare(b.date);});
-    save(); renderBank(); renderBankCards(); cancelEdit('bank'); return;
+    save(); renderBank(); renderBankCards();
+    ['b-account','b-track','b-in','b-inc-cat','b-out','b-exp-cat','b-party','b-ref','b-note'].forEach(function(id){sv(id,'');});
+    cancelEdit('bank'); return;
   }
 
   DB.bank.push({id:uid(),date:d,account:acc,track:trk,in:bi,out:bo,
     incCat:ica,expCat:eca,party:pa,ref:rf,note:nt,type:'entry'});
   DB.bank.sort(function(a,b){return a.date.localeCompare(b.date);});
   save(); renderBank(); renderBankCards();
-  ['b-in','b-out','b-inc-cat','b-exp-cat','b-party','b-ref','b-note'].forEach(function(id){sv(id,'');});
+  ['b-account','b-track','b-in','b-inc-cat','b-out','b-exp-cat','b-party','b-ref','b-note'].forEach(function(id){sv(id,'');});
 }
 
 function renderBank() {
@@ -1267,25 +1312,31 @@ function renderDash() {
   var tf2 = document.getElementById('track-tfoot');
   var gS=0,gC=0,gP=0,gB=0;
   tb2.innerHTML = DB.tracks.map(function(t) {
-    var rows = DB.sales.filter(function(r){return r.track===t.name;});
-    if (!rows.length) return '<tr>'
+    var srows = DB.sales.filter(function(r){return r.track===t.name;});
+    var sale  = srows.reduce(function(s,r){return s+(r.amt||0);},0);
+    // Collected = sales received + Cash Book IN for this track + Bank Book IN for this track
+    var salesColl = srows.reduce(function(s,r){return s+(r.cash||0)+(r.bank||0)+(r.upi||0);},0);
+    var cashColl  = DB.cash.filter(function(r){return r.track===t.name && r.in && r.type!=='transfer';})
+                           .reduce(function(s,r){return s+(r.in||0);},0);
+    var bankColl  = DB.bank.filter(function(r){return r.track===t.name && r.in && r.type!=='transfer';})
+                           .reduce(function(s,r){return s+(r.in||0);},0);
+    var coll = salesColl + cashColl + bankColl;
+    var pend = sale - coll;
+    if (!sale && !coll) return '<tr>'
       +'<td><b>'+t.name+'</b></td>'
       +'<td style="color:'+DAY_CLR[t.day]+';font-weight:bold;font-size:11px">'+t.day+'</td>'
       +'<td class="r" style="color:#bbb">—</td><td class="r" style="color:#bbb">—</td>'
       +'<td class="r" style="color:#bbb">—</td>'
       +'<td style="text-align:center;color:#bbb">0</td><td class="r" style="color:#bbb">—</td></tr>';
-    var sale=rows.reduce(function(s,r){return s+(r.amt||0);},0);
-    var coll=rows.reduce(function(s,r){return s+(r.cash||0)+(r.bank||0)+(r.upi||0);},0);
-    var pend=sale-coll;
-    gS+=sale; gC+=coll; gP+=pend; gB+=rows.length;
+    gS+=sale; gC+=coll; gP+=pend; gB+=srows.length;
     return '<tr>'
       +'<td><span class="chip ctrk">'+t.name+'</span></td>'
       +'<td style="color:'+DAY_CLR[t.day]+';font-weight:bold;font-size:11px">'+t.day+'</td>'
       +'<td class="r">'+inr(sale)+'</td>'
       +'<td class="r pos">'+inr(coll)+'</td>'
       +'<td class="r '+(pend>0?'neg':'')+'">'+inr(pend)+'</td>'
-      +'<td style="text-align:center">'+rows.length+'</td>'
-      +'<td class="r">'+inr(sale/rows.length)+'</td></tr>';
+      +'<td style="text-align:center">'+(srows.length||'—')+'</td>'
+      +'<td class="r">'+(srows.length?inr(sale/srows.length):'—')+'</td></tr>';
   }).join('');
   tf2.innerHTML = '<td><b>GRAND TOTAL</b></td><td></td>'
     +'<td class="r">'+inr(gS)+'</td>'
@@ -1319,7 +1370,7 @@ function renderPinStatus() {
     el.innerHTML =
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
       +'<div><span style="color:var(--green);font-weight:bold;font-size:15px">🔒 PIN is active</span>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:3px">Bank, Sales, Dashboard &amp; Settings are protected.</div></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:3px">Bank, Sales &amp; Dashboard are protected. Changing or resetting PIN requires current PIN.</div></div>'
       +'<div style="display:flex;gap:7px">'
       +'<button class="btn bb bsm" onclick="changePinFlow()">🔑 Change PIN</button>'
       +'<button class="btn br bsm" onclick="resetPin()">🗑 Reset PIN</button>'
@@ -1506,14 +1557,37 @@ function delIncCat(id) {
 }
 
 // ════════════════════════════════════════════════════════
-// BACKUP / RESTORE
+// AUTO BACKUP REMINDER
 // ════════════════════════════════════════════════════════
+function checkBackupReminder() {
+  var hasData = DB.cash.length || DB.bank.length || DB.sales.length;
+  if (!hasData) return;
+  var lastBackup = localStorage.getItem('arihant_last_backup');
+  var now = Date.now();
+  var oneDayMs = 24 * 60 * 60 * 1000;
+  if (!lastBackup || (now - parseInt(lastBackup)) > oneDayMs) {
+    showBackupBanner();
+  }
+}
+
+function showBackupBanner() {
+  var b = document.getElementById('backup-banner');
+  if (b) b.style.display = 'flex';
+}
+
+function hideBackupBanner() {
+  var b = document.getElementById('backup-banner');
+  if (b) b.style.display = 'none';
+}
+
 function exportData() {
   var blob = new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'arihant_backup_'+tod()+'.json';
   a.click();
+  localStorage.setItem('arihant_last_backup', Date.now().toString());
+  hideBackupBanner();
 }
 
 function importData(e) {
@@ -1545,6 +1619,7 @@ populateAll();
 sv('c-date',tod()); sv('b-date',tod()); sv('s-date',tod());
 sv('tr-date',tod()); sv('dash-date',tod());
 renderCash(); renderSales(); renderBank(); renderBankCards();
+checkBackupReminder();
 </script>
 </body>
 </html>
