@@ -225,26 +225,30 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
       ✏️ Editing entry — make changes and click Update
       <button class="btn bo bsm" onclick="cancelEdit('cash')">✕ Cancel</button>
     </div>
-    <div class="fgrid" style="grid-template-columns:repeat(auto-fill,minmax(165px,1fr))">
-      <div class="fg"><label>Date</label><input type="date" id="c-date"></div>
-      <div class="fg"><label>Track / Source</label><select id="c-track"></select></div>
-      <div class="fg"><label>Party / Reason</label><input type="text" id="c-party" placeholder="Name or reason"></div>
-      <div class="fg"><label>Note</label><input type="text" id="c-note" placeholder="Optional"></div>
-    </div>
-    <!-- Cash IN row -->
-    <div style="background:#F0FFF4;border:1.5px solid #A7F3D0;border-radius:8px;padding:10px 12px;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:bold;color:#1E6B3C;margin-bottom:7px">📥 CASH IN</div>
+
+    <!-- Cash IN box -->
+    <div style="background:#F0FFF4;border:1.5px solid #A7F3D0;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:bold;color:#1E6B3C;margin-bottom:9px">📥 CASH IN</div>
       <div class="fgrid">
-        <div class="fg"><label>Cash IN (₹)</label><input type="number" id="c-in" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Date</label><input type="date" id="c-in-date"></div>
+        <div class="fg"><label>Track / Source</label><select id="c-in-track"></select></div>
+        <div class="fg"><label>Amount (₹)</label><input type="number" id="c-in" placeholder="0" min="0" step="0.01"></div>
         <div class="fg"><label>Income Category</label><select id="c-inc-cat"></select></div>
+        <div class="fg"><label>Reason / Party</label><input type="text" id="c-in-party" placeholder="From whom / reason"></div>
+        <div class="fg"><label>Note</label><input type="text" id="c-in-note" placeholder="Optional"></div>
       </div>
     </div>
-    <!-- Cash OUT row -->
-    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:bold;color:#922B21;margin-bottom:7px">📤 CASH OUT</div>
+
+    <!-- Cash OUT box -->
+    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:bold;color:#922B21;margin-bottom:9px">📤 CASH OUT</div>
       <div class="fgrid">
-        <div class="fg"><label>Cash OUT (₹)</label><input type="number" id="c-out" placeholder="0" min="0" step="0.01"></div>
+        <div class="fg"><label>Date</label><input type="date" id="c-out-date"></div>
+        <div class="fg"><label>Track / Source</label><select id="c-out-track"></select></div>
+        <div class="fg"><label>Amount (₹)</label><input type="number" id="c-out" placeholder="0" min="0" step="0.01"></div>
         <div class="fg"><label>Expense Category</label><select id="c-exp-cat"></select></div>
+        <div class="fg"><label>Reason / Party</label><input type="text" id="c-out-party" placeholder="To whom / reason"></div>
+        <div class="fg"><label>Note</label><input type="text" id="c-out-note" placeholder="Optional"></div>
       </div>
     </div>
     <button class="btn bg" id="cash-btn" onclick="addCash()">+ Add Entry</button>
@@ -413,6 +417,16 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
 
 <!-- ════════════════ SETTINGS ════════════════ -->
 <div class="page" id="page-settings">
+
+  <!-- Audit Log -->
+  <div class="card">
+    <div class="card-title">📋 Cash Book Edit History</div>
+    <div id="audit-locked" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span style="font-size:13px;color:var(--muted)">🔒 Edit history is PIN-protected</span>
+      <button class="btn bb bsm" onclick="viewAuditLog()">🔑 View History</button>
+    </div>
+    <div id="audit-content" style="display:none"></div>
+  </div>
 
   <!-- PIN Management -->
   <div class="card" id="pin-status-card">
@@ -644,7 +658,7 @@ function chipExp(name) {
 // ════════════════════════════════════════════════════════
 function populateAll() {
   // Tracks
-  ['c-track','b-track','s-track','tr-track'].forEach(function(id) {
+  ['c-in-track','c-out-track','b-track','s-track','tr-track'].forEach(function(id) {
     var el = document.getElementById(id); if (!el) return;
     var cur = el.value;
     el.innerHTML = '<option value="">— Select Track —</option>';
@@ -864,11 +878,12 @@ function setEditMode(section, on) {
 function cancelEdit(section) {
   setEditMode(section, false);
   var clears = {
-    cash:  ['c-in','c-out','c-inc-cat','c-exp-cat','c-party','c-note'],
+    cash:  [],   // handled by clearCashForm()
     bank:  ['b-in','b-out','b-inc-cat','b-exp-cat','b-party','b-ref','b-note','b-account'],
     sales: ['s-inv','s-party','s-amt','s-cash','s-bank','s-upi','s-note'],
   };
-  (clears[section]||[]).forEach(function(id){sv(id,'');});
+  if (section === 'cash') clearCashForm();
+  else (clears[section]||[]).forEach(function(id){sv(id,'');});
 }
 // ════════════════════════════════════════════════════════
 // TAB SWITCHING (PIN-aware)
@@ -893,7 +908,12 @@ function switchTabDirect(t) {
   if (pg) pg.classList.add('active');
   if (t==='dash')     { renderDash(); }
   if (t==='bank')     { renderBankCards(); renderBank(); }
-  if (t==='settings') { renderTracks(); renderAccList(); renderExpCatList(); renderIncCatList(); renderPinStatus(); }
+  if (t==='settings') {
+    renderTracks(); renderAccList(); renderExpCatList(); renderIncCatList(); renderPinStatus();
+    // Re-lock audit log each time Settings is opened
+    document.getElementById('audit-locked').style.display  = 'flex';
+    document.getElementById('audit-content').style.display = 'none';
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -926,45 +946,90 @@ function addTransfer() {
 // CASH BOOK
 // ════════════════════════════════════════════════════════
 function editCash(id) {
-  requirePin(function() { doEditCash(id); }, true);
-}
-function doEditCash(id) {
   var r = DB.cash.find(function(x){return x.id===id;}); if (!r) return;
   if (r.type==='transfer') { alert('Transfer entries cannot be edited. Delete and re-enter.'); return; }
   editState.cash = id;
-  sv('c-date', r.date); sv('c-track', r.track||'');
-  sv('c-in',  r.in||''); sv('c-out', r.out||'');
-  sv('c-inc-cat', r.incCat||''); sv('c-exp-cat', r.expCat||'');
-  sv('c-party', r.party||''); sv('c-note', r.note||'');
+  editState.cashSnapshot = {date:r.date,track:r.track,in:r.in,out:r.out,
+    incCat:r.incCat,expCat:r.expCat,party:r.party,note:r.note,ts:new Date().toISOString()};
+  clearCashForm();
+  if ((r.in||0) > 0) {
+    sv('c-in-date',r.date); sv('c-in-track',r.track||'');
+    sv('c-in',r.in); sv('c-inc-cat',r.incCat||'');
+    sv('c-in-party',r.party||''); sv('c-in-note',r.note||'');
+  } else {
+    sv('c-out-date',r.date); sv('c-out-track',r.track||'');
+    sv('c-out',r.out); sv('c-exp-cat',r.expCat||'');
+    sv('c-out-party',r.party||''); sv('c-out-note',r.note||'');
+  }
   setEditMode('cash', true);
 }
 
 function addCash() {
-  var d   = gv('c-date');
-  var trk = gv('c-track');
   var ci  = parseFloat(gv('c-in'))||0;
   var co  = parseFloat(gv('c-out'))||0;
-  var ica = gv('c-inc-cat');
-  var eca = gv('c-exp-cat');
-  var pa  = gv('c-party').trim();
-  var nt  = gv('c-note').trim();
-  if (!d)        { alert('Select date.'); return; }
-  if (!ci && !co){ alert('Enter Cash IN or Cash OUT.'); return; }
+  if (!ci && !co) { alert('Enter Cash IN or Cash OUT amount.'); return; }
 
   if (editState.cash) {
-    // Update existing
+    // Editing — figure out which box was used (IN or OUT)
     var r = DB.cash.find(function(x){return x.id===editState.cash;});
-    if (r) { r.date=d; r.track=trk; r.in=ci; r.out=co; r.incCat=ica; r.expCat=eca; r.party=pa; r.note=nt; }
+    if (r) {
+      var snap = editState.cashSnapshot || {};
+      if (!DB.auditLog) DB.auditLog = [];
+      var wasIn = (r.in||0) > 0;
+      var d   = wasIn ? gv('c-in-date')    : gv('c-out-date');
+      var trk = wasIn ? gv('c-in-track')   : gv('c-out-track');
+      var pa  = wasIn ? gv('c-in-party')   : gv('c-out-party');
+      var nt  = wasIn ? gv('c-in-note')    : gv('c-out-note');
+      var ica = wasIn ? gv('c-inc-cat')    : '';
+      var eca = wasIn ? ''                 : gv('c-exp-cat');
+      var amt = wasIn ? ci : co;
+      if (!d) { alert('Select date.'); return; }
+      DB.auditLog.unshift({
+        ts:snap.ts||new Date().toISOString(), entryId:r.id,
+        entryDate:snap.date||r.date, entryParty:snap.party||r.party,
+        before:{date:snap.date,track:snap.track,in:snap.in,out:snap.out,
+                incCat:snap.incCat,expCat:snap.expCat,party:snap.party,note:snap.note},
+        after: {date:d,track:trk,in:wasIn?amt:0,out:wasIn?0:amt,
+                incCat:ica,expCat:eca,party:pa,note:nt}
+      });
+      r.date=d; r.track=trk; r.party=pa; r.note=nt;
+      r.incCat=ica; r.expCat=eca;
+      if (wasIn)  { r.in=amt; r.out=0; }
+      else        { r.out=amt; r.in=0; }
+    }
+    editState.cashSnapshot=null;
     DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
     save(); renderCash();
-    ['c-track','c-in','c-inc-cat','c-out','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
-    cancelEdit('cash'); return;
+    clearCashForm(); cancelEdit('cash'); return;
   }
 
-  DB.cash.push({id:uid(),date:d,track:trk,in:ci,out:co,incCat:ica,expCat:eca,party:pa,note:nt,type:'entry'});
-  DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
-  save(); renderCash();
-  ['c-track','c-in','c-inc-cat','c-out','c-exp-cat','c-party','c-note'].forEach(function(id){sv(id,'');});
+  // New entry — create one or two entries depending on what's filled
+  var added = false;
+  if (ci) {
+    var d = gv('c-in-date');
+    if (!d) { alert('Select date for Cash IN.'); return; }
+    DB.cash.push({id:uid(),date:d,track:gv('c-in-track'),in:ci,out:0,
+      incCat:gv('c-inc-cat'),expCat:'',party:gv('c-in-party').trim(),
+      note:gv('c-in-note').trim(),type:'entry'});
+    added=true;
+  }
+  if (co) {
+    var d2 = gv('c-out-date');
+    if (!d2) { alert('Select date for Cash OUT.'); return; }
+    DB.cash.push({id:uid(),date:d2,track:gv('c-out-track'),in:0,out:co,
+      incCat:'',expCat:gv('c-exp-cat'),party:gv('c-out-party').trim(),
+      note:gv('c-out-note').trim(),type:'entry'});
+    added=true;
+  }
+  if (added) {
+    DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+    save(); renderCash(); clearCashForm();
+  }
+}
+
+function clearCashForm() {
+  ['c-in','c-in-track','c-inc-cat','c-in-party','c-in-note',
+   'c-out','c-out-track','c-exp-cat','c-out-party','c-out-note'].forEach(function(id){sv(id,'');});
 }
 
 function renderCash() {
@@ -974,33 +1039,87 @@ function renderCash() {
     tb.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="ei">💰</div>No cash entries yet.</div></td></tr>';
     tf.innerHTML = ''; return;
   }
-  var bal=0, tIn=0, tOut=0;
-  tb.innerHTML = DB.cash.map(function(r) {
-    bal += (r.in||0)-(r.out||0); tIn+=r.in||0; tOut+=r.out||0;
-    var isT = r.type==='transfer';
-    var typL = isT ? '<span class="chip ctrf">🏧 Deposit</span>'
-                   : '<span class="chip" style="background:#EDE7F6;color:#4527A0">📝 Entry</span>';
-    return '<tr>'
-      +'<td>'+fmt(r.date)+'</td>'
-      +'<td>'+typL+'</td>'
-      +'<td>'+(r.track?'<span class="chip ctrk">'+r.track+'</span>':'<span style="color:#aaa">—</span>')+'</td>'
-      +'<td class="r pos">'+(r.in?inr(r.in):'—')+'</td>'
-      +'<td>'+(r.in&&!isT?chipInc(r.incCat):'')+'</td>'
-      +'<td class="r neg">'+(r.out?inr(r.out):'—')+'</td>'
-      +'<td>'+(r.out&&!isT?chipExp(r.expCat):'')+'</td>'
-      +'<td>'+(r.party||'—')+'</td>'
-      +'<td class="r '+(bal>=0?'pos':'neg')+'">'+inr(bal)+'</td>'
-      +'<td>'+(r.note||'—')+'</td>'
-      +'<td style="white-space:nowrap">'
-      +(isT?'':'<button class="btn-edit" onclick="editCash(\''+r.id+'\')">✏️</button>')
-      +'<button class="btn-del" onclick="delCash(\''+r.id+'\')">✕</button></td>'
-      +'</tr>';
-  }).join('');
-  tf.innerHTML = '<td colspan="3"><b>TOTAL</b></td>'
-    +'<td class="r pos">'+inr(tIn)+'</td><td></td>'
-    +'<td class="r neg">'+inr(tOut)+'</td>'
+
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  // Group by date
+  var grouped = {};
+  var dateOrder = [];
+  DB.cash.forEach(function(r) {
+    if (!grouped[r.date]) { grouped[r.date]=[]; dateOrder.push(r.date); }
+    grouped[r.date].push(r);
+  });
+
+  var runningBal = 0;
+  var grandIn = 0, grandOut = 0;
+  var html = '';
+
+  dateOrder.forEach(function(date) {
+    var rows = grouped[date];
+    var dayName = DAYS[new Date(date+'T00:00:00').getDay()];
+    var openBal = runningBal;
+    var dayIn = 0, dayOut = 0;
+
+    // Day header row
+    html += '<tr style="background:#1F3864">'
+      +'<td colspan="11" style="color:#FFD700;font-weight:bold;font-size:12px;padding:7px 10px">'
+      +'📅 '+fmt(date)+' &nbsp;·&nbsp; '+dayName
+      +'</td></tr>';
+
+    // Opening balance row
+    html += '<tr style="background:#F0F4FF">'
+      +'<td colspan="8" style="font-size:11px;color:#555;padding:5px 10px;font-style:italic">Opening Balance</td>'
+      +'<td class="r" style="font-weight:bold;color:'+(openBal>=0?'#1E6B3C':'#C0392B')+'">'+inr(openBal)+'</td>'
+      +'<td colspan="2"></td></tr>';
+
+    // Transaction rows
+    rows.forEach(function(r) {
+      runningBal += (r.in||0)-(r.out||0);
+      dayIn  += r.in||0; dayOut += r.out||0;
+      grandIn += r.in||0; grandOut += r.out||0;
+      var isT = r.type==='transfer';
+      var typL = isT ? '<span class="chip ctrf">🏧 Deposit</span>'
+                     : '<span class="chip" style="background:#EDE7F6;color:#4527A0">📝</span>';
+      html += '<tr>'
+        +'<td style="padding-left:18px;font-size:12px;color:#555">'+fmt(r.date)+'</td>'
+        +'<td>'+typL+'</td>'
+        +'<td>'+(r.track?'<span class="chip ctrk">'+r.track+'</span>':'<span style="color:#aaa">—</span>')+'</td>'
+        +'<td class="r pos">'+(r.in?inr(r.in):'—')+'</td>'
+        +'<td>'+(r.in&&!isT?chipInc(r.incCat):'')+'</td>'
+        +'<td class="r neg">'+(r.out?inr(r.out):'—')+'</td>'
+        +'<td>'+(r.out&&!isT?chipExp(r.expCat):'')+'</td>'
+        +'<td>'+(r.party||'—')+'</td>'
+        +'<td class="r '+(runningBal>=0?'pos':'neg')+'">'+inr(runningBal)+'</td>'
+        +'<td>'+(r.note||'—')+'</td>'
+        +'<td style="white-space:nowrap">'
+        +(isT?'':'<button class="btn-edit" onclick="editCash(\''+r.id+'\')">✏️</button>')
+        +'<button class="btn-del" onclick="delCash(\''+r.id+'\')">✕</button></td>'
+        +'</tr>';
+    });
+
+    // Day summary row
+    var dayNet = dayIn - dayOut;
+    html += '<tr style="background:#FFF8DC;border-top:2px solid #E2C96A">'
+      +'<td colspan="3" style="font-weight:bold;font-size:12px;padding:6px 10px;color:#856404">'
+      +'Day Summary — IN: <span style="color:#1E6B3C">'+inr(dayIn)+'</span>'
+      +' &nbsp;·&nbsp; OUT: <span style="color:#C0392B">'+inr(dayOut)+'</span>'
+      +' &nbsp;·&nbsp; Net: <span style="color:'+(dayNet>=0?'#1E6B3C':'#C0392B')+'">'+inr(dayNet)+'</span>'
+      +'</td>'
+      +'<td colspan="5"></td>'
+      +'<td class="r" style="font-weight:bold;color:'+(runningBal>=0?'#1E6B3C':'#C0392B')+'">'
+      +'Closing: '+inr(runningBal)+'</td>'
+      +'<td colspan="2"></td></tr>';
+
+    // Spacer
+    html += '<tr style="height:6px;background:var(--bg)"><td colspan="11"></td></tr>';
+  });
+
+  tb.innerHTML = html;
+  tf.innerHTML = '<td colspan="3"><b>GRAND TOTAL</b></td>'
+    +'<td class="r pos">'+inr(grandIn)+'</td><td></td>'
+    +'<td class="r neg">'+inr(grandOut)+'</td>'
     +'<td></td><td></td>'
-    +'<td class="r '+(bal>=0?'pos':'neg')+'">'+inr(bal)+'</td><td colspan="2"></td>';
+    +'<td class="r '+(runningBal>=0?'pos':'neg')+'">'+inr(runningBal)+'</td><td colspan="2"></td>';
   document.getElementById('cash-title').textContent = 'Cash Book ('+DB.cash.length+' entries)';
 }
 
@@ -1021,7 +1140,9 @@ function delCash(id) {
 // BANK BOOK
 // ════════════════════════════════════════════════════════
 function editBank(id) {
-  requirePin(function() { doEditBank(id); }, true);
+  // Always require PIN for bank edits, even if session is unlocked
+  openPinModal('verify', '🔒 Enter PIN to Edit', 'Bank entries require PIN to edit', true);
+  pinOnSuccess = function() { doEditBank(id); };
 }
 function doEditBank(id) {
   var r = DB.bank.find(function(x){return x.id===id;}); if (!r) return;
@@ -1137,7 +1258,9 @@ function renderBankCards() {
 // DAILY SALES
 // ════════════════════════════════════════════════════════
 function editSale(id) {
-  requirePin(function() { doEditSale(id); }, true);
+  // Always require PIN for sales edits, even if session is unlocked
+  openPinModal('verify', '🔒 Enter PIN to Edit', 'Sales entries require PIN to edit', true);
+  pinOnSuccess = function() { doEditSale(id); };
 }
 function doEditSale(id) {
   var r = DB.sales.find(function(x){return x.id===id;}); if (!r) return;
@@ -1557,7 +1680,61 @@ function delIncCat(id) {
 }
 
 // ════════════════════════════════════════════════════════
-// AUTO BACKUP REMINDER
+// AUDIT LOG
+// ════════════════════════════════════════════════════════
+function viewAuditLog() {
+  requirePin(function() {
+    document.getElementById('audit-locked').style.display  = 'none';
+    document.getElementById('audit-content').style.display = 'block';
+    renderAuditLog();
+  }, true);
+}
+
+function renderAuditLog() {
+  var el = document.getElementById('audit-content'); if (!el) return;
+  var log = DB.auditLog || [];
+  if (!log.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">📋</div>No edits recorded yet.</div>'; return;
+  }
+  el.innerHTML = '<div style="margin-top:8px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    +'<span style="font-size:12px;color:var(--muted)">'+log.length+' edit(s) recorded</span>'
+    +'<button class="btn br bsm" onclick="clearAuditLog()">🗑 Clear History</button>'
+    +'</div>'
+    + log.map(function(e) {
+      var ts = new Date(e.ts);
+      var timeStr = ts.toLocaleDateString('en-IN')+' '+ts.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      var b = e.before, a = e.after;
+      var changes = [];
+      if (b.date  !== a.date)   changes.push('Date: '+fmt(b.date)+' → '+fmt(a.date));
+      if (b.track !== a.track)  changes.push('Track: '+(b.track||'—')+' → '+(a.track||'—'));
+      if ((b.in||0) !== (a.in||0))   changes.push('Cash IN: '+inr(b.in||0)+' → '+inr(a.in||0));
+      if ((b.out||0)!== (a.out||0))  changes.push('Cash OUT: '+inr(b.out||0)+' → '+inr(a.out||0));
+      if (b.incCat!== a.incCat) changes.push('Inc.Cat: '+(b.incCat||'—')+' → '+(a.incCat||'—'));
+      if (b.expCat!== a.expCat) changes.push('Exp.Cat: '+(b.expCat||'—')+' → '+(a.expCat||'—'));
+      if (b.party !== a.party)  changes.push('Party: '+(b.party||'—')+' → '+(a.party||'—'));
+      if (b.note  !== a.note)   changes.push('Note: '+(b.note||'—')+' → '+(a.note||'—'));
+      return '<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--alt)">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+        +'<span style="font-weight:bold;font-size:13px">'+fmt(e.entryDate)+' · '+(e.entryParty||'—')+'</span>'
+        +'<span style="font-size:11px;color:var(--muted)">✏️ Edited '+timeStr+'</span>'
+        +'</div>'
+        +'<div style="font-size:12px;color:#444">'
+        + (changes.length ? changes.map(function(c){
+            return '<div style="padding:2px 0;border-bottom:1px dashed #eee">'+c+'</div>';
+          }).join('') : '<span style="color:var(--muted)">No field changes detected</span>')
+        +'</div></div>';
+    }).join('')
+    +'</div>';
+}
+
+function clearAuditLog() {
+  if (!confirm('Clear all edit history? This cannot be undone.')) return;
+  DB.auditLog = []; save(); renderAuditLog();
+}
+
+// ════════════════════════════════════════════════════════
+// BACKUP / RESTORE
 // ════════════════════════════════════════════════════════
 function checkBackupReminder() {
   var hasData = DB.cash.length || DB.bank.length || DB.sales.length;
@@ -1616,7 +1793,8 @@ function importData(e) {
 // INIT
 // ════════════════════════════════════════════════════════
 populateAll();
-sv('c-date',tod()); sv('b-date',tod()); sv('s-date',tod());
+sv('c-in-date',tod()); sv('c-out-date',tod());
+sv('b-date',tod()); sv('s-date',tod());
 sv('tr-date',tod()); sv('dash-date',tod());
 renderCash(); renderSales(); renderBank(); renderBankCards();
 checkBackupReminder();
