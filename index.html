@@ -237,10 +237,11 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
         <div class="fg"><label>Reason / Party</label><input type="text" id="c-in-party" placeholder="From whom / reason"></div>
         <div class="fg"><label>Note</label><input type="text" id="c-in-note" placeholder="Optional"></div>
       </div>
+      <button class="btn bg" id="cash-in-btn" onclick="addCashIn()" style="margin-top:4px">+ Add Cash IN</button>
     </div>
 
     <!-- Cash OUT box -->
-    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:12px;margin-bottom:12px">
+    <div style="background:#FEF3F2;border:1.5px solid #FECACA;border-radius:8px;padding:12px;margin-bottom:6px">
       <div style="font-size:12px;font-weight:bold;color:#922B21;margin-bottom:9px">📤 CASH OUT</div>
       <div class="fgrid">
         <div class="fg"><label>Date</label><input type="date" id="c-out-date"></div>
@@ -250,8 +251,8 @@ td.pos{color:var(--green)}td.neg{color:var(--red)}
         <div class="fg"><label>Reason / Party</label><input type="text" id="c-out-party" placeholder="To whom / reason"></div>
         <div class="fg"><label>Note</label><input type="text" id="c-out-note" placeholder="Optional"></div>
       </div>
+      <button class="btn br" id="cash-out-btn" onclick="addCashOut()" style="margin-top:4px">+ Add Cash OUT</button>
     </div>
-    <button class="btn bg" id="cash-btn" onclick="addCash()">+ Add Entry</button>
   </div>
 
   <div class="card">
@@ -857,20 +858,37 @@ var editState = { cash: null, bank: null, sales: null };
 
 function setEditMode(section, on) {
   var banner = document.getElementById(section+'-edit-banner');
-  var btn    = document.getElementById(section+'-btn');
-  var title  = document.getElementById(section+'-form-title');
   var labels = { cash:'Cash Entry', bank:'Bank Transaction', sales:'Sale Entry' };
-  var colors = { cash:'bg', bank:'bb', sales:'bp' };
   if (on) {
     if (banner) banner.classList.add('show');
-    if (btn)    { btn.textContent = '✅ Update '+labels[section]; btn.className='btn br'; }
-    if (title)  title.textContent = '✏️ Edit '+labels[section];
-    // scroll form into view
+    // Cash has two buttons
+    if (section === 'cash') {
+      var inBtn  = document.getElementById('cash-in-btn');
+      var outBtn = document.getElementById('cash-out-btn');
+      if (inBtn)  { inBtn.textContent  = '✅ Update Cash IN';  inBtn.className  = 'btn bt'; inBtn.style.marginTop='4px'; }
+      if (outBtn) { outBtn.textContent = '✅ Update Cash OUT'; outBtn.className = 'btn bt'; outBtn.style.marginTop='4px'; }
+    } else {
+      var btn = document.getElementById(section+'-btn');
+      if (btn) { btn.textContent = '✅ Update '+labels[section]; btn.className='btn br'; }
+    }
+    var title = document.getElementById(section+'-form-title');
+    if (title) title.textContent = '✏️ Edit '+labels[section];
     if (banner) banner.scrollIntoView({behavior:'smooth', block:'nearest'});
   } else {
     if (banner) banner.classList.remove('show');
-    if (btn)    { btn.textContent = '+ Add '+labels[section].split(' ')[0]; btn.className='btn '+colors[section]; }
-    if (title)  title.textContent = '➕ Add '+labels[section];
+    if (section === 'cash') {
+      var inBtn2  = document.getElementById('cash-in-btn');
+      var outBtn2 = document.getElementById('cash-out-btn');
+      var colors  = { cash:'bg' };
+      if (inBtn2)  { inBtn2.textContent  = '+ Add Cash IN';  inBtn2.className  = 'btn bg'; inBtn2.style.marginTop='4px'; }
+      if (outBtn2) { outBtn2.textContent = '+ Add Cash OUT'; outBtn2.className = 'btn br'; outBtn2.style.marginTop='4px'; }
+    } else {
+      var btn2 = document.getElementById(section+'-btn');
+      var col  = {bank:'bb', sales:'bp'}[section] || 'bg';
+      if (btn2) { btn2.textContent = '+ Add '+labels[section].split(' ')[0]; btn2.className='btn '+col; }
+    }
+    var title2 = document.getElementById(section+'-form-title');
+    if (title2) title2.textContent = '➕ Add '+labels[section];
     editState[section] = null;
   }
 }
@@ -964,67 +982,69 @@ function editCash(id) {
   setEditMode('cash', true);
 }
 
-function addCash() {
-  var ci  = parseFloat(gv('c-in'))||0;
-  var co  = parseFloat(gv('c-out'))||0;
-  if (!ci && !co) { alert('Enter Cash IN or Cash OUT amount.'); return; }
+function addCashIn() {
+  var d   = gv('c-in-date');
+  var amt = parseFloat(gv('c-in'))||0;
+  if (!d)   { alert('Select date for Cash IN.'); return; }
+  if (!amt) { alert('Enter Cash IN amount.'); return; }
 
   if (editState.cash) {
-    // Editing — figure out which box was used (IN or OUT)
+    // Editing an IN entry
     var r = DB.cash.find(function(x){return x.id===editState.cash;});
-    if (r) {
-      var snap = editState.cashSnapshot || {};
-      if (!DB.auditLog) DB.auditLog = [];
-      var wasIn = (r.in||0) > 0;
-      var d   = wasIn ? gv('c-in-date')    : gv('c-out-date');
-      var trk = wasIn ? gv('c-in-track')   : gv('c-out-track');
-      var pa  = wasIn ? gv('c-in-party')   : gv('c-out-party');
-      var nt  = wasIn ? gv('c-in-note')    : gv('c-out-note');
-      var ica = wasIn ? gv('c-inc-cat')    : '';
-      var eca = wasIn ? ''                 : gv('c-exp-cat');
-      var amt = wasIn ? ci : co;
-      if (!d) { alert('Select date.'); return; }
-      DB.auditLog.unshift({
-        ts:snap.ts||new Date().toISOString(), entryId:r.id,
-        entryDate:snap.date||r.date, entryParty:snap.party||r.party,
-        before:{date:snap.date,track:snap.track,in:snap.in,out:snap.out,
-                incCat:snap.incCat,expCat:snap.expCat,party:snap.party,note:snap.note},
-        after: {date:d,track:trk,in:wasIn?amt:0,out:wasIn?0:amt,
-                incCat:ica,expCat:eca,party:pa,note:nt}
-      });
-      r.date=d; r.track=trk; r.party=pa; r.note=nt;
-      r.incCat=ica; r.expCat=eca;
-      if (wasIn)  { r.in=amt; r.out=0; }
-      else        { r.out=amt; r.in=0; }
-    }
+    if (r) { logCashEdit(r); r.date=d; r.track=gv('c-in-track'); r.in=amt; r.out=0;
+             r.incCat=gv('c-inc-cat'); r.expCat=''; r.party=gv('c-in-party').trim(); r.note=gv('c-in-note').trim(); }
     editState.cashSnapshot=null;
     DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
-    save(); renderCash();
-    clearCashForm(); cancelEdit('cash'); return;
+    save(); renderCash(); clearCashForm(); cancelEdit('cash'); return;
   }
 
-  // New entry — create one or two entries depending on what's filled
-  var added = false;
-  if (ci) {
-    var d = gv('c-in-date');
-    if (!d) { alert('Select date for Cash IN.'); return; }
-    DB.cash.push({id:uid(),date:d,track:gv('c-in-track'),in:ci,out:0,
-      incCat:gv('c-inc-cat'),expCat:'',party:gv('c-in-party').trim(),
-      note:gv('c-in-note').trim(),type:'entry'});
-    added=true;
-  }
-  if (co) {
-    var d2 = gv('c-out-date');
-    if (!d2) { alert('Select date for Cash OUT.'); return; }
-    DB.cash.push({id:uid(),date:d2,track:gv('c-out-track'),in:0,out:co,
-      incCat:'',expCat:gv('c-exp-cat'),party:gv('c-out-party').trim(),
-      note:gv('c-out-note').trim(),type:'entry'});
-    added=true;
-  }
-  if (added) {
+  DB.cash.push({id:uid(),date:d,track:gv('c-in-track'),in:amt,out:0,
+    incCat:gv('c-inc-cat'),expCat:'',party:gv('c-in-party').trim(),
+    note:gv('c-in-note').trim(),type:'entry'});
+  DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderCash();
+  ['c-in','c-in-track','c-inc-cat','c-in-party','c-in-note'].forEach(function(id){sv(id,'');});
+}
+
+function addCashOut() {
+  var d   = gv('c-out-date');
+  var amt = parseFloat(gv('c-out'))||0;
+  if (!d)   { alert('Select date for Cash OUT.'); return; }
+  if (!amt) { alert('Enter Cash OUT amount.'); return; }
+
+  if (editState.cash) {
+    // Editing an OUT entry
+    var r = DB.cash.find(function(x){return x.id===editState.cash;});
+    if (r) { logCashEdit(r); r.date=d; r.track=gv('c-out-track'); r.in=0; r.out=amt;
+             r.incCat=''; r.expCat=gv('c-exp-cat'); r.party=gv('c-out-party').trim(); r.note=gv('c-out-note').trim(); }
+    editState.cashSnapshot=null;
     DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
-    save(); renderCash(); clearCashForm();
+    save(); renderCash(); clearCashForm(); cancelEdit('cash'); return;
   }
+
+  DB.cash.push({id:uid(),date:d,track:gv('c-out-track'),in:0,out:amt,
+    incCat:'',expCat:gv('c-exp-cat'),party:gv('c-out-party').trim(),
+    note:gv('c-out-note').trim(),type:'entry'});
+  DB.cash.sort(function(a,b){return a.date.localeCompare(b.date);});
+  save(); renderCash();
+  ['c-out','c-out-track','c-exp-cat','c-out-party','c-out-note'].forEach(function(id){sv(id,'');});
+}
+
+function logCashEdit(r) {
+  if (!DB.auditLog) DB.auditLog = [];
+  var snap = editState.cashSnapshot || {};
+  DB.auditLog.unshift({
+    ts: new Date().toISOString(), entryId:r.id,
+    entryDate:snap.date||r.date, entryParty:snap.party||r.party,
+    before:{date:snap.date,track:snap.track,in:snap.in,out:snap.out,
+            incCat:snap.incCat,expCat:snap.expCat,party:snap.party,note:snap.note},
+    after: {date:gv('c-in-date')||gv('c-out-date'),
+            track:gv('c-in-track')||gv('c-out-track'),
+            in:parseFloat(gv('c-in'))||0, out:parseFloat(gv('c-out'))||0,
+            incCat:gv('c-inc-cat'),expCat:gv('c-exp-cat'),
+            party:(gv('c-in-party')||gv('c-out-party')).trim(),
+            note:(gv('c-in-note')||gv('c-out-note')).trim()}
+  });
 }
 
 function clearCashForm() {
@@ -1054,11 +1074,13 @@ function renderCash() {
   var grandIn = 0, grandOut = 0;
   var html = '';
 
-  dateOrder.forEach(function(date) {
+  dateOrder.forEach(function(date, dateIdx) {
     var rows = grouped[date];
     var dayName = DAYS[new Date(date+'T00:00:00').getDay()];
     var openBal = runningBal;
     var dayIn = 0, dayOut = 0;
+    var isFirstDay = (dateIdx === 0);
+    var isLastDay  = (dateIdx === dateOrder.length - 1);
 
     // Day header row
     html += '<tr style="background:#1F3864">'
@@ -1067,9 +1089,13 @@ function renderCash() {
       +'</td></tr>';
 
     // Opening balance row
-    html += '<tr style="background:#F0F4FF">'
-      +'<td colspan="8" style="font-size:11px;color:#555;padding:5px 10px;font-style:italic">Opening Balance</td>'
-      +'<td class="r" style="font-weight:bold;color:'+(openBal>=0?'#1E6B3C':'#C0392B')+'">'+inr(openBal)+'</td>'
+    var openLabel = isFirstDay
+      ? 'Opening Balance'
+      : '↳ Opening Balance (closing of previous day)';
+    html += '<tr style="background:#E8EAF6">'
+      +'<td colspan="8" style="font-size:11px;color:#3949AB;padding:5px 10px;font-style:italic;font-weight:bold">'
+      + openLabel+'</td>'
+      +'<td class="r" style="font-weight:bold;font-size:13px;color:'+(openBal>=0?'#1E6B3C':'#C0392B')+'">'+inr(openBal)+'</td>'
       +'<td colspan="2"></td></tr>';
 
     // Transaction rows
@@ -1097,21 +1123,25 @@ function renderCash() {
         +'</tr>';
     });
 
-    // Day summary row
+    // Day summary / closing balance row
     var dayNet = dayIn - dayOut;
+    var nextLabel = isLastDay
+      ? '<td colspan="2" style="background:#FFE082"></td>'
+      : '<td colspan="2" style="background:#FFE082;font-size:10px;color:#666;text-align:center">↓ next day opening</td>';
     html += '<tr style="background:#FFF8DC;border-top:2px solid #E2C96A">'
       +'<td colspan="3" style="font-weight:bold;font-size:12px;padding:6px 10px;color:#856404">'
-      +'Day Summary — IN: <span style="color:#1E6B3C">'+inr(dayIn)+'</span>'
+      +'IN: <span style="color:#1E6B3C">'+inr(dayIn)+'</span>'
       +' &nbsp;·&nbsp; OUT: <span style="color:#C0392B">'+inr(dayOut)+'</span>'
       +' &nbsp;·&nbsp; Net: <span style="color:'+(dayNet>=0?'#1E6B3C':'#C0392B')+'">'+inr(dayNet)+'</span>'
       +'</td>'
       +'<td colspan="5"></td>'
-      +'<td class="r" style="font-weight:bold;color:'+(runningBal>=0?'#1E6B3C':'#C0392B')+'">'
+      +'<td class="r" style="font-weight:bold;font-size:14px;background:#FFE082;color:'+(runningBal>=0?'#1B5E20':'#B71C1C')+'">'
       +'Closing: '+inr(runningBal)+'</td>'
-      +'<td colspan="2"></td></tr>';
+      + nextLabel+'</tr>';
 
-    // Spacer
-    html += '<tr style="height:6px;background:var(--bg)"><td colspan="11"></td></tr>';
+    // Spacer between days
+    if (!isLastDay)
+      html += '<tr style="height:8px;background:var(--bg)"><td colspan="11"></td></tr>';
   });
 
   tb.innerHTML = html;
